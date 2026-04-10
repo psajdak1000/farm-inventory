@@ -1,59 +1,150 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authorization;
-using InwentarzWGospodarstwie.Models;
+﻿using InwentarzWGospodarstwie.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
-namespace InwentarzWGospodarstwie.Controllers
+namespace InwentarzWGospodarstwie.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class KarmieniaController : ControllerBase
 {
-    [Authorize] // tylko zalogowani
-    public class KarmieniController : Controller
+    private readonly Database _context;
+
+    public KarmieniaController(Database context)
     {
-        private readonly UserManager<User> _userManager;
-        private readonly Database _context;
-
-        public KarmieniController(UserManager<User> userManager, Database context)
-        {
-            _userManager = userManager;
-            _context = context;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Create()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            // Tylko Właściciel może dodawać karmienia
-            if (user.WlascicielId == null)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
-            // Przekazujemy listę zwierząt do widoku
-            ViewBag.Zwierzeta = _context.Zwierzes.ToList();
-
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create(Karmienie karmienie)
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user.WlascicielId == null)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
-            if (ModelState.IsValid)
-            {
-                _context.Karmienies.Add(karmienie);
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Index", "Home");
-            }
-
-            // Jeśli błąd - załaduj ponownie listę zwierząt
-            ViewBag.Zwierzeta = _context.Zwierzes.ToList();
-            return View(karmienie);
-        }
+        _context = context;
     }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<KarmienieResponse>>> GetAll()
+    {
+        var feedings = await _context.Karmienies
+            .AsNoTracking()
+            .Select(k => ToResponse(k))
+            .ToListAsync();
+
+        return Ok(feedings);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<KarmienieResponse>> GetById(int id)
+    {
+        var feeding = await _context.Karmienies
+            .AsNoTracking()
+            .FirstOrDefaultAsync(k => k.IdKarmienia == id);
+
+        if (feeding is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(ToResponse(feeding));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<KarmienieResponse>> Create([FromBody] KarmienieUpsertRequest request)
+    {
+        var animalExists = await _context.Zwierzes.AnyAsync(z => z.IdZwierzecia == request.IdZwierzecia);
+        if (!animalExists)
+        {
+            return BadRequest("Nie istnieje zwierze o podanym IdZwierzecia.");
+        }
+
+        var feeding = new Karmienie
+        {
+            Nazwa = request.Nazwa,
+            Rodzaj = request.Rodzaj,
+            Ilość = request.Ilosc,
+            Cena = request.Cena,
+            DataZakupu = request.DataZakupu,
+            IdZwierzecia = request.IdZwierzecia
+        };
+
+        _context.Karmienies.Add(feeding);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetById), new { id = feeding.IdKarmienia }, ToResponse(feeding));
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<KarmienieResponse>> Update(int id, [FromBody] KarmienieUpsertRequest request)
+    {
+        var feeding = await _context.Karmienies.FirstOrDefaultAsync(k => k.IdKarmienia == id);
+        if (feeding is null)
+        {
+            return NotFound();
+        }
+
+        var animalExists = await _context.Zwierzes.AnyAsync(z => z.IdZwierzecia == request.IdZwierzecia);
+        if (!animalExists)
+        {
+            return BadRequest("Nie istnieje zwierze o podanym IdZwierzecia.");
+        }
+
+        feeding.Nazwa = request.Nazwa;
+        feeding.Rodzaj = request.Rodzaj;
+        feeding.Ilość = request.Ilosc;
+        feeding.Cena = request.Cena;
+        feeding.DataZakupu = request.DataZakupu;
+        feeding.IdZwierzecia = request.IdZwierzecia;
+
+        await _context.SaveChangesAsync();
+        return Ok(ToResponse(feeding));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var feeding = await _context.Karmienies.FirstOrDefaultAsync(k => k.IdKarmienia == id);
+        if (feeding is null)
+        {
+            return NotFound();
+        }
+
+        _context.Karmienies.Remove(feeding);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    private static KarmienieResponse ToResponse(Karmienie feeding) =>
+        new(
+            feeding.IdKarmienia,
+            feeding.Nazwa,
+            feeding.Rodzaj,
+            feeding.Ilość,
+            feeding.Cena,
+            feeding.DataZakupu,
+            feeding.IdZwierzecia);
 }
+
+public sealed class KarmienieUpsertRequest
+{
+    [Required]
+    [MaxLength(50)]
+    public string Nazwa { get; set; } = string.Empty;
+
+    [MaxLength(20)]
+    public string? Rodzaj { get; set; }
+
+    [Required]
+    [MaxLength(50)]
+    public string Ilosc { get; set; } = string.Empty;
+
+    [Range(typeof(decimal), "0", "99999999")]
+    public decimal Cena { get; set; }
+
+    public DateOnly DataZakupu { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int IdZwierzecia { get; set; }
+}
+
+public record KarmienieResponse(
+    int IdKarmienia,
+    string Nazwa,
+    string? Rodzaj,
+    string Ilosc,
+    decimal Cena,
+    DateOnly DataZakupu,
+    int IdZwierzecia);

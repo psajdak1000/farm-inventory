@@ -1,87 +1,117 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authorization;
-using InwentarzWGospodarstwie.Models;
+﻿using InwentarzWGospodarstwie.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
-namespace InwentarzWGospodarstwie.Controllers
+namespace InwentarzWGospodarstwie.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class LekarzeController : ControllerBase
 {
-    [Authorize] // tylko zalogowani
-    public class ProfileController : Controller
+    private readonly Database _context;
+
+    public LekarzeController(Database context)
     {
-        private readonly UserManager<User> _userManager;
-        private readonly Database _context;
+        _context = context;
+    }
 
-        public ProfileController(UserManager<User> userManager, Database context)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<LekarzResponse>>> GetAll()
+    {
+        var doctors = await _context.Lekarzs
+            .AsNoTracking()
+            .Select(l => ToResponse(l))
+            .ToListAsync();
+
+        return Ok(doctors);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<LekarzResponse>> GetById(int id)
+    {
+        var doctor = await _context.Lekarzs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.IdLekarza == id);
+
+        if (doctor is null)
         {
-            _userManager = userManager;
-            _context = context;
+            return NotFound();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> EditProfile()
+        return Ok(ToResponse(doctor));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<LekarzResponse>> Create([FromBody] LekarzUpsertRequest request)
+    {
+        var doctor = new Lekarz
         {
-            var user = await _userManager.GetUserAsync(User);
+            Imię = request.Imie,
+            Nazwisko = request.Nazwisko,
+            Telefon = request.Telefon
+        };
 
-            if (user.WlascicielId != null)
-            {
-                var w = await _context.Wlasciciels.FindAsync(user.WlascicielId);
-                if (w != null)
-                {
-                    ViewBag.Imie = w.Imię;
-                    ViewBag.Nazwisko = w.Nazwisko;
-                    ViewBag.Telefon = w.Telefon;
-                    ViewBag.EMail = w.EMail;
-                }
-            }
-            else if (user.LekarzId != null)
-            {
-                var l = await _context.Lekarzs.FindAsync(user.LekarzId);
-                if (l != null)
-                {
-                    ViewBag.Imie = l.Imię;
-                    ViewBag.Nazwisko = l.Nazwisko;
-                    ViewBag.Telefon = l.Telefon;
-                }
-            }
+        _context.Lekarzs.Add(doctor);
+        await _context.SaveChangesAsync();
 
-            return View();
+        return CreatedAtAction(nameof(GetById), new { id = doctor.IdLekarza }, ToResponse(doctor));
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<LekarzResponse>> Update(int id, [FromBody] LekarzUpsertRequest request)
+    {
+        var doctor = await _context.Lekarzs.FirstOrDefaultAsync(l => l.IdLekarza == id);
+        if (doctor is null)
+        {
+            return NotFound();
         }
 
-        // POST - zapis dla Właściciela
-        [HttpPost]
-        public async Task<IActionResult> EditWlasciciel(string Imie, string Nazwisko, string Telefon, string EMail)
+        doctor.Imię = request.Imie;
+        doctor.Nazwisko = request.Nazwisko;
+        doctor.Telefon = request.Telefon;
+
+        await _context.SaveChangesAsync();
+        return Ok(ToResponse(doctor));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var doctor = await _context.Lekarzs.FirstOrDefaultAsync(l => l.IdLekarza == id);
+        if (doctor is null)
         {
-            var user = await _userManager.GetUserAsync(User);
-            var w = await _context.Wlasciciels.FindAsync(user.WlascicielId);
-
-            if (w != null)
-            {
-                w.Imię = Imie;
-                w.Nazwisko = Nazwisko;
-                w.Telefon = Telefon;
-                w.EMail = EMail;
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToAction("Index", "Home");
+            return NotFound();
         }
 
-        // POST - zapis dla Lekarza
-        [HttpPost]
-        public async Task<IActionResult> EditLekarz(string Imie, string Nazwisko, int Telefon)
+        _context.Lekarzs.Remove(doctor);
+
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-            var l = await _context.Lekarzs.FindAsync(user.LekarzId);
-
-            if (l != null)
-            {
-                l.Imię = Imie;
-                l.Nazwisko = Nazwisko;
-                l.Telefon = Telefon;
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToAction("Index", "Home");
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict("Nie mozna usunac lekarza, poniewaz jest powiazany z innymi rekordami.");
         }
     }
+
+    private static LekarzResponse ToResponse(Lekarz doctor) =>
+        new(doctor.IdLekarza, doctor.Imię, doctor.Nazwisko, doctor.Telefon);
 }
+
+public sealed class LekarzUpsertRequest
+{
+    [Required]
+    [MaxLength(50)]
+    public string Imie { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(50)]
+    public string Nazwisko { get; set; } = string.Empty;
+
+    public int Telefon { get; set; }
+}
+
+public record LekarzResponse(int IdLekarza, string Imie, string Nazwisko, int Telefon);

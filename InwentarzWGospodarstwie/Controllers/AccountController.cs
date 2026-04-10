@@ -1,142 +1,125 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using InwentarzWGospodarstwie.Models;
-using InwentarzWGospodarstwie.Models.ViewModels;
-using Microsoft.AspNetCore.Authorization;
+﻿using InwentarzWGospodarstwie.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
-namespace InwentarzWGospodarstwie.Controllers
+namespace InwentarzWGospodarstwie.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class WlascicieleController : ControllerBase
 {
-    public class AccountController : Controller
+    private readonly Database _context;
+
+    public WlascicieleController(Database context)
     {
-        // Narzędzia do zarządzania użytkownikami (z biblioteki Identity)
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
-        // Twoja baza danych (do tworzenia Właścicieli/Lekarzy)
-        private readonly Database _context;
-
-        // Konstruktor - tutaj wstrzykujemy potrzebne narzędzia
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, Database context)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _context = context;
-        }
-
-        // 1. Wyświetlenie formularza rejestracji (GET)
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        // 2. Obsługa wysłania formularza (POST) 
-        [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                // Tworzymy obiekt użytkownika (karta wejściowa)
-                var user = new User { UserName = model.Email, Email = model.Email };
-
-                // SPRAWDZAMY KIM JEST UŻYTKOWNIK 
-                if (model.TypKonta == "Wlasciciel")
-                {
-                    // Tworzymy pustego Właściciela w bazie
-                    var nowyWlasciciel = new Wlasciciel
-                    {
-                        Imię = "Nowy",
-                        Nazwisko = "Użytkownik",
-                        Telefon = "000000000"
-                    };
-
-                    _context.Wlasciciels.Add(nowyWlasciciel);
-                    await _context.SaveChangesAsync(); // Zapisujemy, żeby baza nadała ID
-
-                    // Łączymy Usera z Właścicielem
-                    user.WlascicielId = nowyWlasciciel.IdWlasciciela;
-                }
-                else if (model.TypKonta == "Lekarz")
-                {
-                    // Tworzymy pustego Lekarza w bazie
-                    var nowyLekarz = new Lekarz
-                    {
-                        Imię = "Nowy",
-                        Nazwisko = "Weterynarz",
-                        Telefon = 0 // Telefon w Lekarzu  jako int
-                    };
-
-                    _context.Lekarzs.Add(nowyLekarz);
-                    await _context.SaveChangesAsync(); // Zapisujemy, żeby baza nadała ID
-
-                    // Łączymy Usera z Lekarzem
-                    user.LekarzId = nowyLekarz.IdLekarza;
-                }
-
-                // FINALNE TWORZENIE KONTA
-                var result = await _userManager.CreateAsync(user, model.Password);
-
-                if (result.Succeeded)
-                {
-                    // Jeśli się udało, od razu logujemy użytkownika
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-
-                    // I przekierowujemy na stronę główną
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // Jeśli były błędy (np. za słabe hasło), dodajemy je do widoku
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
-            }
-
-            // Jeśli coś poszło nie tak, wyświetlamy formularz ponownie z błędami
-            return View(model);
-        }
-
-        // Metoda do wylogowywania
-        [HttpPost]
-        public async Task<IActionResult> Logout()
-        {
-            await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Home");
-        }
-
-        // Wyświetlenie formularza logowania (GET)
-        [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
-
-        // Obsługa logowania (POST)
-        [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
-
-                if (result.Succeeded)
-                {
-                    return RedirectToAction("Index", "Home");
-                }
-
-                ModelState.AddModelError("", "Nieudana próba logowania");
-            }
-
-            return View(model);
-        }
-
-        // PUNKT 7 z instrukcji - Test zabezpieczeń
-        [HttpGet]
-        [Authorize] // To sprawia, że wejdą tu tylko zalogowani
-        public IActionResult Welcome()
-        {
-            //  zwróci prosty widok 
-            return Content("Zostałeś poprawnie zalogowany! To jest strefa chroniona.");
-        }
-
+        _context = context;
     }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<WlascicielResponse>>> GetAll()
+    {
+        var owners = await _context.Wlasciciels
+            .AsNoTracking()
+            .Select(w => ToResponse(w))
+            .ToListAsync();
+
+        return Ok(owners);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<WlascicielResponse>> GetById(int id)
+    {
+        var owner = await _context.Wlasciciels
+            .AsNoTracking()
+            .FirstOrDefaultAsync(w => w.IdWlasciciela == id);
+
+        if (owner is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(ToResponse(owner));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<WlascicielResponse>> Create([FromBody] WlascicielUpsertRequest request)
+    {
+        var owner = new Wlasciciel
+        {
+            Imię = request.Imie,
+            Nazwisko = request.Nazwisko,
+            Telefon = request.Telefon,
+            EMail = request.EMail
+        };
+
+        _context.Wlasciciels.Add(owner);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetById), new { id = owner.IdWlasciciela }, ToResponse(owner));
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<WlascicielResponse>> Update(int id, [FromBody] WlascicielUpsertRequest request)
+    {
+        var owner = await _context.Wlasciciels.FirstOrDefaultAsync(w => w.IdWlasciciela == id);
+        if (owner is null)
+        {
+            return NotFound();
+        }
+
+        owner.Imię = request.Imie;
+        owner.Nazwisko = request.Nazwisko;
+        owner.Telefon = request.Telefon;
+        owner.EMail = request.EMail;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(ToResponse(owner));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var owner = await _context.Wlasciciels.FirstOrDefaultAsync(w => w.IdWlasciciela == id);
+        if (owner is null)
+        {
+            return NotFound();
+        }
+
+        _context.Wlasciciels.Remove(owner);
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict("Nie mozna usunac wlasciciela, poniewaz jest powiazany z innymi rekordami.");
+        }
+    }
+
+    private static WlascicielResponse ToResponse(Wlasciciel owner) =>
+        new(owner.IdWlasciciela, owner.Imię, owner.Nazwisko, owner.Telefon, owner.EMail);
 }
+
+public sealed class WlascicielUpsertRequest
+{
+    [Required]
+    [MaxLength(50)]
+    public string Imie { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(50)]
+    public string Nazwisko { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(9)]
+    public string Telefon { get; set; } = string.Empty;
+
+    [MaxLength(50)]
+    public string? EMail { get; set; }
+}
+
+public record WlascicielResponse(int IdWlasciciela, string Imie, string Nazwisko, string Telefon, string? EMail);
