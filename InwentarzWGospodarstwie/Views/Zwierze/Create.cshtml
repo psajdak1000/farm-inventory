@@ -1,0 +1,255 @@
+﻿@{
+    ViewData["Title"] = "Dodaj zwierzę";
+}
+
+<style>
+    :root {
+        --green-dark: #1a3a2a;
+        --green-mid: #2d5e3f;
+        --green-light: #4a8c5c;
+        --cream: #f5f0e8;
+        --gold: #c9a84c;
+    }
+
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+        .page-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            color: #1a3a2a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+    .form-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 36px;
+        max-width: 680px;
+        box-shadow: 0 2px 20px rgba(26,58,42,0.08);
+        border: 1px solid rgba(26,58,42,0.06);
+    }
+
+    .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--green-mid);
+        margin-bottom: 18px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid rgba(45,94,63,0.12);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 7px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            background: #f9f7f4;
+            border: 1.5px solid #e0dbd0;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #1a1a1a;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+            .form-group input:focus,
+            .form-group select:focus {
+                border-color: var(--green-light);
+                box-shadow: 0 0 0 3px rgba(74,140,92,0.12);
+                background: #fff;
+            }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+    .validation-message {
+        color: #c0392b;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .hint {
+        font-size: 11px;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    .btn-save {
+        padding: 13px 32px;
+        background: var(--green-mid);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+    }
+
+        .btn-save:hover {
+            background: var(--green-dark);
+            transform: translateY(-1px);
+        }
+
+    .btn-back {
+        padding: 13px 24px;
+        background: transparent;
+        color: #666;
+        border: 1.5px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: border-color 0.2s, color 0.2s;
+    }
+
+        .btn-back:hover {
+            border-color: #aaa;
+            color: #333;
+        }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 8px;
+    }
+
+    @@media (max-width: 600px) {
+        .form-row, .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+
+        .form-card {
+            padding: 24px 20px;
+        }
+    }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+
+<div class="page-header">
+    <h2>🐄 Dodaj zwierzę</h2>
+    <p>Zarejestruj nowe zwierzę w gospodarstwie</p>
+</div>
+
+<div class="form-card">
+    <form asp-action="Create" asp-controller="Zwierze" method="post">
+        @Html.AntiForgeryToken()
+
+        <p class="section-label">Identyfikacja</p>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="IdentyfikatorKolczyka">Nr kolczyka</label>
+                <input type="text" id="IdentyfikatorKolczyka" name="IdentyfikatorKolczyka" placeholder="PL123456789" required />
+                <div class="hint">Unikalny identyfikator zwierzęcia</div>
+            </div>
+            <div class="form-group">
+                <label for="Rasa">Rasa</label>
+                <input type="text" id="Rasa" name="Rasa" placeholder="np. Holstein, Hereford" maxlength="50" />
+            </div>
+        </div>
+
+        <p class="section-label">Dane biologiczne</p>
+        <div class="form-row-3">
+            <div class="form-group">
+                <label for="Plec">Płeć</label>
+                <select id="Plec" name="Płeć">
+                    <option value="">-- wybierz --</option>
+                    <option value="Samiec">Samiec</option>
+                    <option value="Samica">Samica</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="Wiek">Wiek (lata)</label>
+                <input type="number" id="Wiek" name="Wiek" min="0" max="30" placeholder="2" />
+            </div>
+            <div class="form-group">
+                <label for="Waga">Waga (kg)</label>
+                <input type="number" id="Waga" name="Waga" min="0" step="0.1" placeholder="450.0" />
+            </div>
+        </div>
+
+        <p class="section-label">Dane finansowe</p>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="DataZakupuUrodzenia">Data zakupu / urodzenia</label>
+                <input type="date" id="DataZakupuUrodzenia" name="DataZakupuUrodzenia" />
+            </div>
+            <div class="form-group">
+                <label for="CenaZakupu">Cena zakupu (zł)</label>
+                <input type="number" id="CenaZakupu" name="CenaZakupu" min="0" step="0.01" placeholder="2500.00" />
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="DataSprzedazySmierci">Data sprzedaży / śmierci</label>
+                <input type="date" id="DataSprzedazySmierci" name="DataSprzedażyŚmierci" />
+                <div class="hint">Pozostaw puste jeśli zwierzę nadal w stadzie</div>
+            </div>
+            <div class="form-group">
+                <label for="CenaSprzedazy">Cena sprzedaży (zł)</label>
+                <input type="number" id="CenaSprzedazy" name="CenaSprzedaży" min="0" step="0.01" placeholder="0.00" />
+            </div>
+        </div>
+
+        <p class="section-label">Przypisanie</p>
+        <div class="form-group">
+            <label for="IdGospodarstwa">Gospodarstwo</label>
+            <select id="IdGospodarstwa" name="IdGospodarstwa" required>
+                <option value="">-- wybierz gospodarstwo --</option>
+                @if (ViewBag.Gospodarstwa != null)
+                {
+                    @foreach (var g in ViewBag.Gospodarstwa)
+                    {
+                        <option value="@g.IdGodpodarstwa">@g.Nazwa</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn-save">✚ Dodaj zwierzę</button>
+            <a asp-action="Index" asp-controller="Home" class="btn-back">← Powrót</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,329 @@
+﻿@{
+    ViewData["Title"] = "Strona główna";
+    var isWlasciciel = User.Identity.IsAuthenticated && !User.IsInRole("Lekarz");
+    var isLekarz = User.Identity.IsAuthenticated && User.IsInRole("Lekarz");
+}
+
+<style>
+    :root {
+        --green-dark: #1a3a2a;
+        --green-mid: #2d5e3f;
+        --green-light: #4a8c5c;
+        --cream: #f5f0e8;
+        --gold: #c9a84c;
+    }
+
+    .hero {
+        background: var(--green-dark);
+        background-image: radial-gradient(ellipse at 20% 60%, rgba(74,140,92,0.2) 0%, transparent 55%), radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.1) 0%, transparent 50%);
+        border-radius: 16px;
+        padding: 56px 48px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .hero::after {
+            content: '🐄';
+            position: absolute;
+            right: 48px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 100px;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+    .hero-text h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: 38px;
+        color: var(--cream);
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+
+    .hero-text p {
+        color: rgba(245,240,232,0.6);
+        font-size: 15px;
+        max-width: 420px;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(201,168,76,0.15);
+        border: 1px solid rgba(201,168,76,0.3);
+        color: var(--gold);
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .btn-hero {
+        padding: 11px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: opacity 0.2s, transform 0.1s;
+        font-family: inherit;
+        cursor: pointer;
+    }
+
+        .btn-hero:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+
+    .btn-hero-primary {
+        background: var(--gold);
+        color: var(--green-dark);
+        border: none;
+    }
+
+    .btn-hero-outline {
+        background: transparent;
+        color: var(--cream);
+        border: 1.5px solid rgba(245,240,232,0.3);
+    }
+
+    .section-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 20px;
+        color: var(--green-dark);
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(26,58,42,0.1);
+        }
+
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px 22px;
+        border: 1.5px solid rgba(26,58,42,0.07);
+        box-shadow: 0 2px 12px rgba(26,58,42,0.06);
+        text-decoration: none;
+        display: block;
+        transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(26,58,42,0.12);
+            border-color: var(--green-light);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--green-mid);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+    .card-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .card-title {
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--green-dark);
+        margin-bottom: 4px;
+    }
+
+    .card-desc {
+        font-size: 13px;
+        color: #888;
+        line-height: 1.4;
+    }
+
+    .auth-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        max-width: 500px;
+    }
+
+    .auth-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 28px 24px;
+        border: 1.5px solid rgba(26,58,42,0.08);
+        box-shadow: 0 2px 12px rgba(26,58,42,0.06);
+        text-decoration: none;
+        text-align: center;
+        display: block;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+        .auth-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(26,58,42,0.12);
+        }
+
+        .auth-card .auth-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .auth-card .auth-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--green-dark);
+            margin-bottom: 4px;
+        }
+
+        .auth-card .auth-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+    .auth-card-primary {
+        background: var(--green-mid);
+    }
+
+        .auth-card-primary .auth-title {
+            color: #fff;
+        }
+
+        .auth-card-primary .auth-desc {
+            color: rgba(255,255,255,0.6);
+        }
+
+    @@media (max-width: 640px) {
+        .hero {
+            padding: 36px 24px;
+        }
+
+        .hero-text h1 {
+            font-size: 28px;
+        }
+
+        .auth-grid {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+        }
+    }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+
+<div class="hero">
+    <div class="hero-text">
+        @if (User.Identity.IsAuthenticated)
+        {
+            <div class="hero-badge">
+                @if (isLekarz)
+                {
+                    <span>🩺 Lekarz weterynarii</span>
+                }
+                else
+                {
+                    <span>🏡 Właściciel gospodarstwa</span>
+                }
+            </div>
+            <h1>Witaj z powrotem!</h1>
+            <p>Zarządzaj swoim inwentarzem – dodawaj zwierzęta, rejestruj zabiegi i kontroluj karmienie.</p>
+            <div class="hero-actions">
+                <a asp-controller="Profile" asp-action="EditProfile" class="btn-hero btn-hero-outline">👤 Edytuj profil</a>
+                <form asp-action="Logout" asp-controller="Account" method="post" style="display:inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-hero btn-hero-outline">Wyloguj się</button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <h1>Inwentarz<br>Gospodarstwa</h1>
+            <p>System do zarządzania żywym inwentarzem – zwierzęta, zabiegi weterynaryjne, karma w jednym miejscu.</p>
+        }
+    </div>
+</div>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <h2 class="section-title">🩺 Zabiegi weterynaryjne</h2>
+    <div class="cards-grid">
+        <a asp-controller="Zabieg" asp-action="Create" class="card">
+            <div class="card-icon">➕</div>
+            <div class="card-title">Dodaj zabieg</div>
+            <div class="card-desc">Zarejestruj nowy zabieg weterynaryjny dla zwierzęcia</div>
+        </a>
+    </div>
+
+    if (isWlasciciel)
+    {
+        <h2 class="section-title">🐄 Zwierzęta</h2>
+        <div class="cards-grid">
+            <a asp-controller="Zwierze" asp-action="Create" class="card">
+                <div class="card-icon">➕</div>
+                <div class="card-title">Dodaj zwierzę</div>
+                <div class="card-desc">Zarejestruj nowe zwierzę w gospodarstwie</div>
+            </a>
+        </div>
+
+        <h2 class="section-title">🌾 Karmienie</h2>
+        <div class="cards-grid">
+            <a asp-controller="Karmieni" asp-action="Create" class="card">
+                <div class="card-icon">➕</div>
+                <div class="card-title">Dodaj karmienie</div>
+                <div class="card-desc">Zarejestruj zakup karmy i przypisz do zwierzęcia</div>
+            </a>
+        </div>
+    }
+}
+else
+{
+    <h2 class="section-title">Zacznij korzystać</h2>
+    <div class="auth-grid">
+        <a asp-controller="Account" asp-action="Login" class="auth-card auth-card-primary">
+            <div class="auth-icon">🔑</div>
+            <div class="auth-title">Zaloguj się</div>
+            <div class="auth-desc">Masz już konto</div>
+        </a>
+        <a asp-controller="Account" asp-action="Register" class="auth-card">
+            <div class="auth-icon">📋</div>
+            <div class="auth-title">Zarejestruj się</div>
+            <div class="auth-desc">Utwórz nowe konto</div>
+        </a>
+    </div>
+}

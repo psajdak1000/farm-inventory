@@ -1,0 +1,221 @@
+﻿@{
+    ViewData["Title"] = "Dodaj zabieg";
+}
+
+<style>
+    :root {
+        --green-dark: #1a3a2a;
+        --green-mid: #2d5e3f;
+        --green-light: #4a8c5c;
+        --cream: #f5f0e8;
+        --gold: #c9a84c;
+    }
+
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+        .page-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            color: #1a3a2a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+    .form-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 36px;
+        max-width: 620px;
+        box-shadow: 0 2px 20px rgba(26,58,42,0.08);
+        border: 1px solid rgba(26,58,42,0.06);
+    }
+
+    .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--green-mid);
+        margin-bottom: 18px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid rgba(45,94,63,0.12);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 7px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: #f9f7f4;
+            border: 1.5px solid #e0dbd0;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #1a1a1a;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            resize: vertical;
+        }
+
+            .form-group input:focus,
+            .form-group select:focus,
+            .form-group textarea:focus {
+                border-color: var(--green-light);
+                box-shadow: 0 0 0 3px rgba(74,140,92,0.12);
+                background: #fff;
+            }
+
+    .validation-message {
+        color: #c0392b;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .btn-save {
+        padding: 13px 32px;
+        background: var(--green-mid);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+    }
+
+        .btn-save:hover {
+            background: var(--green-dark);
+            transform: translateY(-1px);
+        }
+
+    .btn-back {
+        padding: 13px 24px;
+        background: transparent;
+        color: #666;
+        border: 1.5px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: border-color 0.2s, color 0.2s;
+    }
+
+        .btn-back:hover {
+            border-color: #aaa;
+            color: #333;
+        }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 8px;
+    }
+
+    @@media (max-width: 600px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-card {
+            padding: 24px 20px;
+        }
+    }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+
+<div class="page-header">
+    <h2>🩺 Dodaj zabieg</h2>
+    <p>Zarejestruj zabieg weterynaryjny dla zwierzęcia</p>
+</div>
+
+<div class="form-card">
+    <form asp-action="Create" asp-controller="Zabieg" method="post">
+        @Html.AntiForgeryToken()
+
+        <p class="section-label">Informacje o zabiegu</p>
+        <div class="form-group">
+            <label for="Nazwa">Nazwa zabiegu</label>
+            <input type="text" id="Nazwa" name="Nazwa" placeholder="np. Szczepienie, Badanie krwi" maxlength="50" required />
+        </div>
+        <div class="form-group">
+            <label for="Opis">Opis / notatki</label>
+            <textarea id="Opis" name="Opis" rows="3" placeholder="Szczegółowy opis przeprowadzonego zabiegu..." maxlength="300"></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="DataZabiegu">Data zabiegu</label>
+                <input type="date" id="DataZabiegu" name="DataZabiegu" required />
+            </div>
+            <div class="form-group">
+                <label for="Koszt">Koszt (zł)</label>
+                <input type="number" id="Koszt" name="Koszt" min="0" step="0.01" placeholder="150.00" />
+            </div>
+        </div>
+
+        <p class="section-label">Przypisanie</p>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="IdZwierzecia">Zwierzę</label>
+                <select id="IdZwierzecia" name="IdZwierzecia" required>
+                    <option value="">-- wybierz zwierzę --</option>
+                    @if (ViewBag.Zwierzeta != null)
+                    {
+                        @foreach (var z in ViewBag.Zwierzeta)
+                        {
+                            <option value="@z.IdZwierzecia">@z.IdentyfikatorKolczyka (@z.Rasa)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="IdLekarza">Lekarz</label>
+                <select id="IdLekarza" name="IdLekarza" required>
+                    <option value="">-- wybierz lekarza --</option>
+                    @if (ViewBag.Lekarze != null)
+                    {
+                        @foreach (var l in ViewBag.Lekarze)
+                        {
+                            <option value="@l.IdLekarza">@l.Imię @l.Nazwisko</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn-save">✚ Dodaj zabieg</button>
+            <a asp-action="Index" asp-controller="Home" class="btn-back">← Powrót</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,461 @@
+﻿@model InwentarzWGospodarstwie.Models.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Rejestracja";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rejestracja – Inwentarz Gospodarstwo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --green-dark: #1a3a2a;
+            --green-mid: #2d5e3f;
+            --green-light: #4a8c5c;
+            --cream: #f5f0e8;
+            --gold: #c9a84c;
+            --red: #c0392b;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: var(--green-dark);
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(74,140,92,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.08) 0%, transparent 50%);
+        }
+
+        /* LEFT PANEL */
+        .panel-left {
+            width: 38%;
+            background: var(--green-mid);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .panel-left::after {
+                content: '';
+                position: absolute;
+                right: -60px;
+                top: -60px;
+                width: 250px;
+                height: 250px;
+                border-radius: 50%;
+                border: 2px solid rgba(201,168,76,0.2);
+            }
+
+        .brand-icon {
+            font-size: 52px;
+            margin-bottom: 24px;
+        }
+
+        .brand-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: var(--cream);
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .brand-subtitle {
+            font-size: 13px;
+            color: rgba(245,240,232,0.6);
+            font-weight: 300;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .decorative-line {
+            width: 60px;
+            height: 2px;
+            background: var(--gold);
+            margin: 24px 0;
+        }
+
+        /* role cards on left */
+        .role-info {
+            margin-top: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .role-card {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+            .role-card .role-icon {
+                font-size: 26px;
+            }
+
+            .role-card h4 {
+                color: var(--cream);
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 2px;
+            }
+
+            .role-card p {
+                color: rgba(245,240,232,0.5);
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+        /* RIGHT PANEL */
+        .panel-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 40px;
+            overflow-y: auto;
+        }
+
+        .form-card {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+        }
+
+            .form-header h2 {
+                font-family: 'Playfair Display', serif;
+                font-size: 26px;
+                color: var(--cream);
+                margin-bottom: 6px;
+            }
+
+            .form-header p {
+                color: rgba(245,240,232,0.5);
+                font-size: 14px;
+            }
+
+        /* TYPE SELECTOR */
+        .type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .type-option {
+            display: none;
+        }
+
+        .type-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 18px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+            .type-label:hover {
+                background: rgba(255,255,255,0.09);
+                border-color: rgba(201,168,76,0.4);
+            }
+
+        .type-option:checked + .type-label {
+            background: rgba(201,168,76,0.15);
+            border-color: var(--gold);
+        }
+
+        .type-label .type-icon {
+            font-size: 30px;
+        }
+
+        .type-label .type-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cream);
+        }
+
+        .type-label .type-desc {
+            font-size: 11px;
+            color: rgba(245,240,232,0.5);
+        }
+
+        /* Fields that show conditionally */
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(201,168,76,0.2);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+            .form-group label {
+                display: block;
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: rgba(245,240,232,0.6);
+                margin-bottom: 7px;
+            }
+
+            .form-group input,
+            .form-group select {
+                width: 100%;
+                padding: 13px 14px;
+                background: rgba(255,255,255,0.07);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 8px;
+                color: var(--cream);
+                font-family: 'Source Sans 3', sans-serif;
+                font-size: 14px;
+                transition: border-color 0.2s, background 0.2s;
+                outline: none;
+            }
+
+                .form-group select option {
+                    background: var(--green-dark);
+                }
+
+                .form-group input:focus,
+                .form-group select:focus {
+                    border-color: var(--gold);
+                    background: rgba(255,255,255,0.1);
+                }
+
+                .form-group input::placeholder {
+                    color: rgba(245,240,232,0.3);
+                }
+
+        .validation-message {
+            color: #ff8a80;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .error-summary {
+            background: rgba(192,57,43,0.2);
+            border: 1px solid rgba(192,57,43,0.4);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+            .error-summary ul {
+                list-style: none;
+            }
+
+            .error-summary li {
+                color: #ff8a80;
+                font-size: 13px;
+            }
+
+        .password-hint {
+            font-size: 11px;
+            color: rgba(245,240,232,0.4);
+            margin-top: 4px;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 15px;
+            background: var(--gold);
+            color: var(--green-dark);
+            border: none;
+            border-radius: 8px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            margin-top: 8px;
+        }
+
+            .btn-register:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+
+            .btn-register:active {
+                transform: translateY(0);
+            }
+
+        .login-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: rgba(245,240,232,0.5);
+        }
+
+            .login-link a {
+                color: var(--gold);
+                text-decoration: none;
+                font-weight: 600;
+            }
+
+                .login-link a:hover {
+                    text-decoration: underline;
+                }
+
+        @@media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+
+            .panel-left {
+                width: 100%;
+                padding: 36px 32px 28px;
+            }
+
+            .role-info {
+                display: none;
+            }
+
+            .panel-right {
+                padding: 36px 24px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="panel-left">
+        <div class="brand-icon">🐄</div>
+        <h1 class="brand-title">Inwentarz<br>Gospodarstwa</h1>
+        <div class="decorative-line"></div>
+        <span class="brand-subtitle">System zarządzania</span>
+
+        <div class="role-info">
+            <div class="role-card">
+                <span class="role-icon">🏡</span>
+                <div>
+                    <h4>Właściciel</h4>
+                    <p>Zarządza gospodarstwem, zwierzętami, karmą i kosztami.</p>
+                </div>
+            </div>
+            <div class="role-card">
+                <span class="role-icon">🩺</span>
+                <div>
+                    <h4>Lekarz weterynarz</h4>
+                    <p>Rejestruje zabiegi i prowadzi dokumentację medyczną zwierząt.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-right">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>Utwórz konto</h2>
+                <p>Wypełnij formularz, aby dołączyć do systemu</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="error-summary">
+                    <ul>
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form asp-action="Register" asp-controller="Account" method="post" id="registerForm">
+                <p class="section-label">Typ konta</p>
+                <div class="type-selector">
+                    <input class="type-option" type="radio" name="TypKonta" id="typeWlasciciel"
+                           value="Wlasciciel" @(Model?.TypKonta == "Wlasciciel" ? "checked" : "") />
+                    <label class="type-label" for="typeWlasciciel">
+                        <span class="type-icon">🏡</span>
+                        <span class="type-name">Właściciel</span>
+                        <span class="type-desc">Właściciel gospodarstwa</span>
+                    </label>
+
+                    <input class="type-option" type="radio" name="TypKonta" id="typeLekarz"
+                           value="Lekarz" @(Model?.TypKonta == "Lekarz" ? "checked" : "") />
+                    <label class="type-label" for="typeLekarz">
+                        <span class="type-icon">🩺</span>
+                        <span class="type-name">Lekarz</span>
+                        <span class="type-desc">Weterynarz</span>
+                    </label>
+                </div>
+
+                <p class="section-label">Dane konta</p>
+                <div class="form-group">
+                    <label asp-for="Email">Adres e-mail</label>
+                    <input asp-for="Email" type="email" placeholder="twoj@email.pl" autocomplete="email" />
+                    <span asp-validation-for="Email" class="validation-message"></span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="Password">Hasło</label>
+                        <input asp-for="Password" type="password" placeholder="••••••••" autocomplete="new-password" />
+                        <div class="password-hint">Min. 8 znaków, wielka litera, cyfra</div>
+                        <span asp-validation-for="Password" class="validation-message"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="ConfirmPassword">Potwierdź hasło</label>
+                        <input asp-for="ConfirmPassword" type="password" placeholder="••••••••" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="validation-message"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-register">Zarejestruj się</button>
+            </form>
+
+            <div class="login-link">
+                Masz już konto? <a asp-action="Login" asp-controller="Account">Zaloguj się</a>
+            </div>
+            <div class="login-link" style="margin-top:12px;">
+                <a asp-action="Index" asp-controller="Home">← Wróć do strony głównej</a>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+</html>

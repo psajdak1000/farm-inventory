@@ -1,0 +1,309 @@
+﻿@model InwentarzWGospodarstwie.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Logowanie";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logowanie – Inwentarz Gospodarstwo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --green-dark: #1a3a2a;
+            --green-mid: #2d5e3f;
+            --green-light: #4a8c5c;
+            --cream: #f5f0e8;
+            --gold: #c9a84c;
+            --red: #c0392b;
+            --text: #1a1a1a;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: var(--green-dark);
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(74,140,92,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.08) 0%, transparent 50%);
+        }
+
+        /* LEFT PANEL */
+        .panel-left {
+            width: 45%;
+            background: var(--green-mid);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .panel-left::after {
+                content: '';
+                position: absolute;
+                right: -60px;
+                top: -60px;
+                width: 250px;
+                height: 250px;
+                border-radius: 50%;
+                border: 2px solid rgba(201,168,76,0.2);
+            }
+
+            .panel-left::before {
+                content: '';
+                position: absolute;
+                right: -30px;
+                bottom: -80px;
+                width: 350px;
+                height: 350px;
+                border-radius: 50%;
+                border: 1px solid rgba(201,168,76,0.1);
+            }
+
+        .brand-icon {
+            font-size: 56px;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+        }
+
+        .brand-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            color: var(--cream);
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .brand-subtitle {
+            font-size: 14px;
+            color: rgba(245,240,232,0.6);
+            font-weight: 300;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .decorative-line {
+            width: 60px;
+            height: 2px;
+            background: var(--gold);
+            margin: 24px 0;
+        }
+
+        .panel-left p {
+            color: rgba(245,240,232,0.75);
+            font-size: 15px;
+            line-height: 1.7;
+            max-width: 300px;
+        }
+
+        /* RIGHT PANEL */
+        .panel-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 40px;
+        }
+
+        .form-card {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .form-header {
+            margin-bottom: 40px;
+        }
+
+            .form-header h2 {
+                font-family: 'Playfair Display', serif;
+                font-size: 28px;
+                color: var(--cream);
+                margin-bottom: 6px;
+            }
+
+            .form-header p {
+                color: rgba(245,240,232,0.5);
+                font-size: 14px;
+            }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+            .form-group label {
+                display: block;
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: rgba(245,240,232,0.7);
+                margin-bottom: 8px;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 14px 16px;
+                background: rgba(255,255,255,0.07);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 8px;
+                color: var(--cream);
+                font-family: 'Source Sans 3', sans-serif;
+                font-size: 15px;
+                transition: border-color 0.2s, background 0.2s;
+                outline: none;
+            }
+
+                .form-group input:focus {
+                    border-color: var(--gold);
+                    background: rgba(255,255,255,0.1);
+                }
+
+                .form-group input::placeholder {
+                    color: rgba(245,240,232,0.3);
+                }
+
+        .validation-message {
+            color: #ff8a80;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .error-summary {
+            background: rgba(192,57,43,0.2);
+            border: 1px solid rgba(192,57,43,0.4);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+            .error-summary ul {
+                list-style: none;
+            }
+
+            .error-summary li {
+                color: #ff8a80;
+                font-size: 13px;
+            }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: var(--gold);
+            color: var(--green-dark);
+            border: none;
+            border-radius: 8px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            margin-top: 8px;
+        }
+
+            .btn-login:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+
+            .btn-login:active {
+                transform: translateY(0);
+            }
+
+        .register-link {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 14px;
+            color: rgba(245,240,232,0.5);
+        }
+
+            .register-link a {
+                color: var(--gold);
+                text-decoration: none;
+                font-weight: 600;
+            }
+
+                .register-link a:hover {
+                    text-decoration: underline;
+                }
+
+        @@media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .panel-left {
+                width: 100%;
+                padding: 40px 32px 32px;
+            }
+
+            .panel-right {
+                padding: 40px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="panel-left">
+        <div class="brand-icon">🐄</div>
+        <h1 class="brand-title">Inwentarz<br>Gospodarstwa</h1>
+        <div class="decorative-line"></div>
+        <span class="brand-subtitle">System zarządzania</span>
+        <p>Zarządzaj zwierzętami, zabiegami weterynaryjnymi i karmą w jednym miejscu.</p>
+    </div>
+
+    <div class="panel-right">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>Zaloguj się</h2>
+                <p>Wpisz swoje dane aby kontynuować</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="error-summary">
+                    <ul>
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form asp-action="Login" asp-controller="Account" method="post">
+                <div class="form-group">
+                    <label asp-for="Email">Adres e-mail</label>
+                    <input asp-for="Email" type="email" placeholder="twoj@email.pl" autocomplete="email" />
+                    <span asp-validation-for="Email" class="validation-message"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Password">Hasło</label>
+                    <input asp-for="Password" type="password" placeholder="••••••••" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="validation-message"></span>
+                </div>
+                <button type="submit" class="btn-login">Zaloguj się</button>
+            </form>
+
+            <div class="register-link">
+                Nie masz konta? <a asp-action="Register" asp-controller="Account">Zarejestruj się</a>
+            </div>
+            <div class="register-link" style="margin-top:12px;">
+                <a asp-action="Index" asp-controller="Home">← Wróć do strony głównej</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,245 @@
+﻿@{
+    ViewData["Title"] = "Edycja profilu";
+    var typKonta = User.IsInRole("Lekarz") ? "Lekarz" : "Wlasciciel";
+}
+
+<style>
+    :root {
+        --green-dark: #1a3a2a;
+        --green-mid: #2d5e3f;
+        --green-light: #4a8c5c;
+        --cream: #f5f0e8;
+        --gold: #c9a84c;
+    }
+
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+        .page-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            color: #1a3a2a;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+    .form-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 36px;
+        max-width: 580px;
+        box-shadow: 0 2px 20px rgba(26,58,42,0.08);
+        border: 1px solid rgba(26,58,42,0.06);
+    }
+
+    .section-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--green-mid);
+        margin-bottom: 18px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid rgba(45,94,63,0.12);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 7px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #f9f7f4;
+            border: 1.5px solid #e0dbd0;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #1a1a1a;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+            .form-group input:focus {
+                border-color: var(--green-light);
+                box-shadow: 0 0 0 3px rgba(74,140,92,0.12);
+                background: #fff;
+            }
+
+    .validation-message {
+        color: #c0392b;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .btn-save {
+        padding: 13px 32px;
+        background: var(--green-mid);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+    }
+
+        .btn-save:hover {
+            background: var(--green-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-save:active {
+            transform: translateY(0);
+        }
+
+    .btn-back {
+        padding: 13px 24px;
+        background: transparent;
+        color: #666;
+        border: 1.5px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: border-color 0.2s, color 0.2s;
+    }
+
+        .btn-back:hover {
+            border-color: #aaa;
+            color: #333;
+        }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 8px;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(45,94,63,0.1);
+        color: var(--green-mid);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 24px;
+    }
+
+    @@media (max-width: 600px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-card {
+            padding: 24px 20px;
+        }
+    }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+
+<div class="page-header">
+    <h2>Edycja profilu</h2>
+    <p>Zaktualizuj swoje dane osobowe i kontaktowe</p>
+</div>
+
+<div class="form-card">
+    <div class="role-badge">
+        @if (typKonta == "Lekarz")
+        {
+            <span>🩺 Lekarz weterynarii</span>
+        }
+        else
+        {
+            <span>🏡 Właściciel gospodarstwa</span>
+        }
+    </div>
+
+    @if (typKonta == "Wlasciciel")
+    {
+        <form asp-action="EditWlasciciel" asp-controller="Profile" method="post">
+            @Html.AntiForgeryToken()
+            <p class="section-label">Dane osobowe</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Imie">Imię</label>
+                    <input type="text" id="Imie" name="Imie" value="@ViewBag.Imie" placeholder="Jan" maxlength="50" required />
+                </div>
+                <div class="form-group">
+                    <label for="Nazwisko">Nazwisko</label>
+                    <input type="text" id="Nazwisko" name="Nazwisko" value="@ViewBag.Nazwisko" placeholder="Kowalski" maxlength="50" required />
+                </div>
+            </div>
+            <p class="section-label">Kontakt</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Telefon">Telefon (9 cyfr)</label>
+                    <input type="text" id="Telefon" name="Telefon" value="@ViewBag.Telefon" placeholder="500123456" maxlength="9" pattern="\d{9}" />
+                </div>
+                <div class="form-group">
+                    <label for="EMail">E-mail kontaktowy</label>
+                    <input type="email" id="EMail" name="EMail" value="@ViewBag.EMail" placeholder="jan@example.pl" maxlength="50" />
+                </div>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn-save">💾 Zapisz zmiany</button>
+                <a asp-action="Index" asp-controller="Home" class="btn-back">← Powrót</a>
+            </div>
+        </form>
+    }
+    else
+    {
+        <form asp-action="EditLekarz" asp-controller="Profile" method="post">
+            @Html.AntiForgeryToken()
+            <p class="section-label">Dane osobowe</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Imie">Imię</label>
+                    <input type="text" id="Imie" name="Imie" value="@ViewBag.Imie" placeholder="Anna" maxlength="50" required />
+                </div>
+                <div class="form-group">
+                    <label for="Nazwisko">Nazwisko</label>
+                    <input type="text" id="Nazwisko" name="Nazwisko" value="@ViewBag.Nazwisko" placeholder="Nowak" maxlength="50" required />
+                </div>
+            </div>
+            <p class="section-label">Kontakt</p>
+            <div class="form-group">
+                <label for="Telefon">Telefon</label>
+                <input type="number" id="Telefon" name="Telefon" value="@ViewBag.Telefon" placeholder="500123456" />
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn-save">💾 Zapisz zmiany</button>
+                <a asp-action="Index" asp-controller="Home" class="btn-back">← Powrót</a>
+            </div>
+        </form>
+    }
+</div>

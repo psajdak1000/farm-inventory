@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Witaj";
+}
+
+<div class="text-center mt-5">
+    <h1 class="text-success">Witamy zalogowanego użytkownika!</h1>
+    <p class="lead">To jest strefa chroniona. Widzisz to tylko dlatego, że jesteś zalogowany.</p>
+
+    <hr />
+
+    <form asp-action="Logout" asp-controller="Account" method="post">
+        <button type="submit" class="btn btn-danger">Wyloguj się</button>
+    </form>
+</div>
