@@ -6,9 +6,10 @@ import useAuthStore from '../../stores/useAuthStore';
    Opcjonalnie mozna podac dozwolone role — jesli rola uzytkownika
    nie znajduje sie na liscie, wyswietlany jest komunikat o braku dostepu. */
 
-function ProtectedRoute({ children, dozwoloneRole = [] }) {
+function ProtectedRoute({ children, allowedRoles, dozwoloneRole }) {
   const { zalogowany, rola } = useAuthStore();
   const location = useLocation();
+  const rolesAllowed = allowedRoles ?? dozwoloneRole ?? [];
 
   /* Niezalogowany uzytkownik trafia na strone logowania */
   if (!zalogowany) {
@@ -16,7 +17,7 @@ function ProtectedRoute({ children, dozwoloneRole = [] }) {
   }
 
   /* Sprawdzenie roli — jesli podano dozwolone role i uzytkownik nie ma zadnej z nich */
-  if (dozwoloneRole.length > 0 && !dozwoloneRole.includes(rola)) {
+  if (rolesAllowed.length > 0 && !rolesAllowed.includes(rola)) {
     return <Navigate to="/" replace />;
   }
 

@@ -9,11 +9,11 @@ import styles from './Sidebar.module.css';
    - Administrator: zarzadzanie uzytkownikami */
 
 function Sidebar() {
-  const { uzytkownik, rola, wyloguj } = useAuthStore();
+  const { uzytkownik: user, rola: role, wyloguj: logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleWyloguj = () => {
-    wyloguj();
+  const handleLogout = () => {
+    logout();
     navigate('/logowanie');
   };
 
@@ -22,8 +22,8 @@ function Sidebar() {
     `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`;
 
   /* Inicjaly uzytkownika wyswietlane w awatarze */
-  const inicjaly = uzytkownik
-    ? `${uzytkownik.imie?.[0] || ''}${uzytkownik.nazwisko?.[0] || ''}`
+  const userInitials = user
+    ? `${user.imie?.[0] || ''}${user.nazwisko?.[0] || ''}`
     : 'UZ';
 
   return (
@@ -31,7 +31,7 @@ function Sidebar() {
       {/* Logo i nazwa aplikacji */}
       <div className={styles.logo}>
         <div className={styles.logoTitle}>Inwentarz</div>
-        <div className={styles.logoSubtitle}>System gospodarstwa</div>
+        <div className={styles.logoSubtitle}>Farm system</div>
       </div>
 
       {/* Nawigacja */}
@@ -41,60 +41,60 @@ function Sidebar() {
           <div className={styles.navSectionTitle}>Menu</div>
           <NavLink to="/" className={getLinkClass} end>
             <span className={styles.navIcon}>&#9751;</span>
-            Strona glowna
+            Home
           </NavLink>
         </div>
 
         {/* Sekcja operacyjna — rozna w zaleznosci od roli */}
-        {(rola === 'Wlasciciel' || rola === 'Administrator') && (
+        {(role === 'Wlasciciel' || role === 'Administrator') && (
           <div className={styles.navSection}>
-            <div className={styles.navSectionTitle}>Gospodarstwo</div>
+            <div className={styles.navSectionTitle}>Farm</div>
             <NavLink to="/zwierzeta" className={getLinkClass}>
               <span className={styles.navIcon}>&#9670;</span>
-              Zwierzeta
+              Animals
             </NavLink>
             <NavLink to="/karmienia" className={getLinkClass}>
               <span className={styles.navIcon}>&#9671;</span>
-              Karmienia
+              Feedings
             </NavLink>
             <NavLink to="/zabiegi" className={getLinkClass}>
               <span className={styles.navIcon}>&#9672;</span>
-              Zabiegi
+              Treatments
             </NavLink>
           </div>
         )}
 
-        {rola === 'Lekarz' && (
+        {role === 'Lekarz' && (
           <div className={styles.navSection}>
-            <div className={styles.navSectionTitle}>Weterynaria</div>
+            <div className={styles.navSectionTitle}>Veterinary</div>
             <NavLink to="/zwierzeta" className={getLinkClass}>
               <span className={styles.navIcon}>&#9670;</span>
-              Przegladanie zwierzat
+              Browse animals
             </NavLink>
             <NavLink to="/zabiegi" className={getLinkClass}>
               <span className={styles.navIcon}>&#9672;</span>
-              Zabiegi
+              Treatments
             </NavLink>
           </div>
         )}
 
         {/* Sekcja administracyjna */}
-        {rola === 'Administrator' && (
+        {role === 'Administrator' && (
           <div className={styles.navSection}>
-            <div className={styles.navSectionTitle}>Administracja</div>
+            <div className={styles.navSectionTitle}>Administration</div>
             <NavLink to="/admin/uzytkownicy" className={getLinkClass}>
               <span className={styles.navIcon}>&#9673;</span>
-              Uzytkownicy
+              Users
             </NavLink>
           </div>
         )}
 
         {/* Profil — dostepny dla kazdego zalogowanego */}
         <div className={styles.navSection}>
-          <div className={styles.navSectionTitle}>Konto</div>
+          <div className={styles.navSectionTitle}>Account</div>
           <NavLink to="/profil" className={getLinkClass}>
             <span className={styles.navIcon}>&#9679;</span>
-            Moj profil
+            My profile
           </NavLink>
         </div>
       </nav>
@@ -102,16 +102,16 @@ function Sidebar() {
       {/* Sekcja uzytkownika na dole sidebara */}
       <div className={styles.userSection}>
         <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>{inicjaly}</div>
+          <div className={styles.userAvatar}>{userInitials}</div>
           <div>
             <div className={styles.userName}>
-              {uzytkownik?.imie || 'Uzytkownik'} {uzytkownik?.nazwisko || ''}
+              {user?.imie || 'User'} {user?.nazwisko || ''}
             </div>
-            <div className={styles.userRole}>{rola || 'Brak roli'}</div>
+            <div className={styles.userRole}>{role || 'No role'}</div>
           </div>
         </div>
-        <button className={styles.logoutButton} onClick={handleWyloguj}>
-          Wyloguj sie
+        <button className={styles.logoutButton} onClick={handleLogout}>
+          Log out
         </button>
       </div>
     </aside>
