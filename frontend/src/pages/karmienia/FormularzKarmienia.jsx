@@ -8,36 +8,36 @@ import { Button, Alert } from '../../components/common/Common';
 import formStyles from '../zwierzeta/FormularzZwierzecia.module.css';
 
 /* Schemat walidacji — odpowiada polom encji Karmienie */
-const schematKarmienia = z.object({
-  nazwa: z.string().min(1, 'Nazwa paszy jest wymagana').max(50, 'Maksymalnie 50 znakow'),
-  rodzaj: z.string().min(1, 'Rodzaj jest wymagany'),
-  ilosc: z.string().min(1, 'Ilosc jest wymagana'),
+const feedingSchema = z.object({
+  nazwa: z.string().min(1, 'Feed name is required').max(50, 'Maximum 50 characters'),
+  rodzaj: z.string().min(1, 'Type is required'),
+  ilosc: z.string().min(1, 'Quantity is required'),
   cena: z
-    .number({ invalid_type_error: 'Cena musi byc liczba' })
-    .min(0, 'Cena nie moze byc ujemna'),
-  dataZakupu: z.string().min(1, 'Data zakupu jest wymagana'),
+    .number({ invalid_type_error: 'Price must be a number' })
+    .min(0, 'Price cannot be negative'),
+  dataZakupu: z.string().min(1, 'Purchase date is required'),
   idZwierzecia: z
-    .number({ invalid_type_error: 'Podaj ID zwierzecia' })
-    .min(1, 'ID zwierzecia jest wymagane'),
+    .number({ invalid_type_error: 'Enter animal ID' })
+    .min(1, 'Animal ID is required'),
 });
 
 /* FormularzKarmienia — formularz rejestracji nowego karmienia. */
 
-function FormularzKarmienia() {
+function FeedingFormPage() {
   const navigate = useNavigate();
-  const { ladowanie, blad, dodaj } = useKarmienieStore();
+  const { ladowanie: isLoading, blad: error, dodaj: createFeeding } = useKarmienieStore();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(schematKarmienia),
+    resolver: zodResolver(feedingSchema),
   });
 
-  const onSubmit = async (dane) => {
-    const sukces = await dodaj(dane);
-    if (sukces) {
+  const onSubmit = async (formData) => {
+    const isSuccess = await createFeeding(formData);
+    if (isSuccess) {
       navigate('/karmienia');
     }
   };
@@ -45,23 +45,23 @@ function FormularzKarmienia() {
   return (
     <div>
       <Header
-        tytul="Dodawanie karmienia"
-        podtytul="Zarejestruj nowe karmienie w ewidencji"
+        tytul="Add feeding"
+        podtytul="Register a new feeding in records"
       />
 
       <div className={formStyles.formPage}>
-        {blad && <Alert typ="error">{blad}</Alert>}
+        {error && <Alert typ="error">{error}</Alert>}
 
         <div className={formStyles.formCard}>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className={formStyles.formGrid}>
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="nazwa">Nazwa paszy</label>
+                <label className={formStyles.label} htmlFor="nazwa">Feed name</label>
                 <input
                   id="nazwa"
                   type="text"
                   className={`${formStyles.input} ${errors.nazwa ? formStyles.inputError : ''}`}
-                  placeholder="np. Siano lucernowe"
+                  placeholder="e.g. Alfalfa hay"
                   {...register('nazwa')}
                 />
                 {errors.nazwa && (
@@ -70,13 +70,13 @@ function FormularzKarmienia() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="rodzaj">Rodzaj</label>
+                <label className={formStyles.label} htmlFor="rodzaj">Type</label>
                 <select
                   id="rodzaj"
                   className={`${formStyles.select} ${errors.rodzaj ? formStyles.inputError : ''}`}
                   {...register('rodzaj')}
                 >
-                  <option value="">-- Wybierz --</option>
+                  <option value="">-- Select --</option>
                   <option value="Sucha">Sucha</option>
                   <option value="Mokra">Mokra</option>
                   <option value="Pastwiskowa">Pastwiskowa</option>
@@ -88,7 +88,7 @@ function FormularzKarmienia() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="ilosc">Ilosc</label>
+                <label className={formStyles.label} htmlFor="ilosc">Quantity</label>
                 <input
                   id="ilosc"
                   type="text"
@@ -102,7 +102,7 @@ function FormularzKarmienia() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="cena">Cena (PLN)</label>
+                <label className={formStyles.label} htmlFor="cena">Price (PLN)</label>
                 <input
                   id="cena"
                   type="number"
@@ -117,7 +117,7 @@ function FormularzKarmienia() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="dataZakupu">Data zakupu</label>
+                <label className={formStyles.label} htmlFor="dataZakupu">Purchase date</label>
                 <input
                   id="dataZakupu"
                   type="date"
@@ -130,12 +130,12 @@ function FormularzKarmienia() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="idZwierzecia">ID zwierzecia</label>
+                <label className={formStyles.label} htmlFor="idZwierzecia">Animal ID</label>
                 <input
                   id="idZwierzecia"
                   type="number"
                   className={`${formStyles.input} ${errors.idZwierzecia ? formStyles.inputError : ''}`}
-                  placeholder="ID zwierzecia"
+                  placeholder="Animal ID"
                   {...register('idZwierzecia', { valueAsNumber: true })}
                 />
                 {errors.idZwierzecia && (
@@ -145,10 +145,10 @@ function FormularzKarmienia() {
 
               <div className={formStyles.formActions}>
                 <Button wariant="secondary" onClick={() => navigate('/karmienia')}>
-                  Anuluj
+                  Cancel
                 </Button>
-                <Button wariant="primary" type="submit" disabled={ladowanie}>
-                  {ladowanie ? 'Zapisywanie...' : 'Dodaj karmienie'}
+                <Button wariant="primary" type="submit" disabled={isLoading}>
+                  {isLoading ? 'Saving...' : 'Add feeding'}
                 </Button>
               </div>
             </div>
@@ -159,4 +159,4 @@ function FormularzKarmienia() {
   );
 }
 
-export default FormularzKarmienia;
+export default FeedingFormPage;

@@ -9,47 +9,54 @@ import { Button, Alert } from '../../components/common/Common';
 import styles from './FormularzZwierzecia.module.css';
 
 /* Schemat walidacji — odpowiada polom encji Zwierze z modelu backendowego */
-const schematZwierzecia = z.object({
+const animalSchema = z.object({
   identyfikatorKolczyka: z
     .string()
-    .min(1, 'Numer kolczyka jest wymagany'),
+    .min(1, 'Ear tag number is required'),
   rasa: z
     .string()
-    .min(1, 'Rasa jest wymagana')
-    .max(50, 'Maksymalnie 50 znakow'),
+    .min(1, 'Breed is required')
+    .max(50, 'Maximum 50 characters'),
   plec: z
     .string()
-    .min(1, 'Wybierz plec'),
+    .min(1, 'Select sex'),
   wiek: z
-    .number({ invalid_type_error: 'Wiek musi byc liczba' })
-    .min(0, 'Wiek nie moze byc ujemny'),
+    .number({ invalid_type_error: 'Age must be a number' })
+    .min(0, 'Age cannot be negative'),
   waga: z
-    .number({ invalid_type_error: 'Waga musi byc liczba' })
-    .min(0, 'Waga nie moze byc ujemna'),
+    .number({ invalid_type_error: 'Weight must be a number' })
+    .min(0, 'Weight cannot be negative'),
   dataZakupuUrodzenia: z
     .string()
-    .min(1, 'Data jest wymagana'),
+    .min(1, 'Date is required'),
   cenaZakupu: z
-    .number({ invalid_type_error: 'Cena musi byc liczba' })
-    .min(0, 'Cena nie moze byc ujemna')
+    .number({ invalid_type_error: 'Price must be a number' })
+    .min(0, 'Price cannot be negative')
     .optional()
     .or(z.literal('')),
   idGospodarstwa: z
-    .number({ invalid_type_error: 'Wybierz gospodarstwo' })
-    .min(1, 'Gospodarstwo jest wymagane'),
+    .number({ invalid_type_error: 'Select farm' })
+    .min(1, 'Farm is required'),
 });
 
 /* FormularzZwierzecia — sluzy zarowno do dodawania nowego zwierzecia,
    jak i do edycji istniejacego. Tryb edycji jest wykrywany na podstawie
    obecnosci parametru :id w adresie URL. */
 
-function FormularzZwierzecia() {
+function AnimalFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { wybraneZwierze, ladowanie, blad, dodaj, aktualizuj, pobierzPoId, wyczyscWybrane } =
-    useZwierzeStore();
+  const {
+    wybraneZwierze: selectedAnimal,
+    ladowanie: isLoading,
+    blad: error,
+    dodaj: createAnimal,
+    aktualizuj: updateAnimal,
+    pobierzPoId: fetchAnimalById,
+    wyczyscWybrane: clearSelectedAnimal,
+  } = useZwierzeStore();
 
-  const trybEdycji = !!id;
+  const isEditMode = !!id;
 
   const {
     register,
@@ -57,31 +64,31 @@ function FormularzZwierzecia() {
     reset,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(schematZwierzecia),
+    resolver: zodResolver(animalSchema),
   });
 
   /* W trybie edycji — pobranie danych zwierzecia i wypelnienie formularza */
   useEffect(() => {
-    if (trybEdycji) {
-      pobierzPoId(Number(id));
+    if (isEditMode) {
+      fetchAnimalById(Number(id));
     }
-    return () => wyczyscWybrane();
-  }, [id, trybEdycji, pobierzPoId, wyczyscWybrane]);
+    return () => clearSelectedAnimal();
+  }, [id, isEditMode, fetchAnimalById, clearSelectedAnimal]);
 
   useEffect(() => {
-    if (trybEdycji && wybraneZwierze) {
-      reset(wybraneZwierze);
+    if (isEditMode && selectedAnimal) {
+      reset(selectedAnimal);
     }
-  }, [wybraneZwierze, trybEdycji, reset]);
+  }, [selectedAnimal, isEditMode, reset]);
 
-  const onSubmit = async (dane) => {
-    let sukces;
-    if (trybEdycji) {
-      sukces = await aktualizuj(Number(id), dane);
+  const onSubmit = async (formData) => {
+    let isSuccess;
+    if (isEditMode) {
+      isSuccess = await updateAnimal(Number(id), formData);
     } else {
-      sukces = await dodaj(dane);
+      isSuccess = await createAnimal(formData);
     }
-    if (sukces) {
+    if (isSuccess) {
       navigate('/zwierzeta');
     }
   };
@@ -89,16 +96,16 @@ function FormularzZwierzecia() {
   return (
     <div>
       <Header
-        tytul={trybEdycji ? 'Edycja zwierzecia' : 'Dodawanie zwierzecia'}
+        tytul={isEditMode ? 'Edit animal' : 'Add animal'}
         podtytul={
-          trybEdycji
-            ? 'Zaktualizuj dane wybranego zwierzecia'
-            : 'Wypelnij formularz, aby dodac nowe zwierze do ewidencji'
+          isEditMode
+            ? 'Update selected animal data'
+            : 'Fill in the form to add a new animal to records'
         }
       />
 
       <div className={styles.formPage}>
-        {blad && <Alert typ="error">{blad}</Alert>}
+        {error && <Alert typ="error">{error}</Alert>}
 
         <div className={styles.formCard}>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -106,7 +113,7 @@ function FormularzZwierzecia() {
               {/* Numer kolczyka */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="identyfikatorKolczyka">
-                  Numer kolczyka
+                  Ear tag number
                 </label>
                 <input
                   id="identyfikatorKolczyka"
@@ -125,7 +132,7 @@ function FormularzZwierzecia() {
               {/* Rasa */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="rasa">
-                  Rasa
+                  Breed
                 </label>
                 <input
                   id="rasa"
@@ -142,14 +149,14 @@ function FormularzZwierzecia() {
               {/* Plec */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="plec">
-                  Plec
+                  Sex
                 </label>
                 <select
                   id="plec"
                   className={`${styles.select} ${errors.plec ? styles.inputError : ''}`}
                   {...register('plec')}
                 >
-                  <option value="">-- Wybierz --</option>
+                  <option value="">-- Select --</option>
                   <option value="Samiec">Samiec</option>
                   <option value="Samica">Samica</option>
                 </select>
@@ -161,7 +168,7 @@ function FormularzZwierzecia() {
               {/* Wiek */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="wiek">
-                  Wiek (lata)
+                  Age (years)
                 </label>
                 <input
                   id="wiek"
@@ -178,7 +185,7 @@ function FormularzZwierzecia() {
               {/* Waga */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="waga">
-                  Waga (kg)
+                  Weight (kg)
                 </label>
                 <input
                   id="waga"
@@ -196,7 +203,7 @@ function FormularzZwierzecia() {
               {/* Data zakupu/urodzenia */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="dataZakupuUrodzenia">
-                  Data zakupu / urodzenia
+                  Purchase / birth date
                 </label>
                 <input
                   id="dataZakupuUrodzenia"
@@ -214,7 +221,7 @@ function FormularzZwierzecia() {
               {/* Cena zakupu */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="cenaZakupu">
-                  Cena zakupu (PLN)
+                  Purchase price (PLN)
                 </label>
                 <input
                   id="cenaZakupu"
@@ -232,13 +239,13 @@ function FormularzZwierzecia() {
               {/* ID Gospodarstwa */}
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="idGospodarstwa">
-                  Gospodarstwo
+                  Farm
                 </label>
                 <input
                   id="idGospodarstwa"
                   type="number"
                   className={`${styles.input} ${errors.idGospodarstwa ? styles.inputError : ''}`}
-                  placeholder="ID gospodarstwa"
+                  placeholder="Farm ID"
                   {...register('idGospodarstwa', { valueAsNumber: true })}
                 />
                 {errors.idGospodarstwa && (
@@ -249,14 +256,14 @@ function FormularzZwierzecia() {
               {/* Przyciski akcji */}
               <div className={styles.formActions}>
                 <Button wariant="secondary" onClick={() => navigate('/zwierzeta')}>
-                  Anuluj
+                  Cancel
                 </Button>
-                <Button wariant="primary" type="submit" disabled={ladowanie}>
-                  {ladowanie
-                    ? 'Zapisywanie...'
-                    : trybEdycji
-                      ? 'Zapisz zmiany'
-                      : 'Dodaj zwierze'}
+                <Button wariant="primary" type="submit" disabled={isLoading}>
+                  {isLoading
+                    ? 'Saving...'
+                    : isEditMode
+                      ? 'Save changes'
+                      : 'Add animal'}
                 </Button>
               </div>
             </div>
@@ -267,4 +274,4 @@ function FormularzZwierzecia() {
   );
 }
 
-export default FormularzZwierzecia;
+export default AnimalFormPage;

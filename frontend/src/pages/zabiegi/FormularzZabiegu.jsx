@@ -8,38 +8,38 @@ import { Button, Alert } from '../../components/common/Common';
 import formStyles from '../zwierzeta/FormularzZwierzecia.module.css';
 
 /* Schemat walidacji — odpowiada polom encji Zabieg */
-const schematZabiegu = z.object({
-  nazwa: z.string().min(1, 'Nazwa zabiegu jest wymagana').max(50, 'Maksymalnie 50 znakow'),
-  dataZabiegu: z.string().min(1, 'Data zabiegu jest wymagana'),
-  opis: z.string().max(300, 'Maksymalnie 300 znakow').optional(),
+const treatmentSchema = z.object({
+  nazwa: z.string().min(1, 'Treatment name is required').max(50, 'Maximum 50 characters'),
+  dataZabiegu: z.string().min(1, 'Treatment date is required'),
+  opis: z.string().max(300, 'Maximum 300 characters').optional(),
   koszt: z
-    .number({ invalid_type_error: 'Koszt musi byc liczba' })
-    .min(0, 'Koszt nie moze byc ujemny'),
+    .number({ invalid_type_error: 'Cost must be a number' })
+    .min(0, 'Cost cannot be negative'),
   idZwierzecia: z
-    .number({ invalid_type_error: 'Podaj ID zwierzecia' })
-    .min(1, 'ID zwierzecia jest wymagane'),
+    .number({ invalid_type_error: 'Enter animal ID' })
+    .min(1, 'Animal ID is required'),
   idLekarza: z
-    .number({ invalid_type_error: 'Podaj ID lekarza' })
-    .min(1, 'ID lekarza jest wymagane'),
+    .number({ invalid_type_error: 'Enter doctor ID' })
+    .min(1, 'Doctor ID is required'),
 });
 
 /* FormularzZabiegu — formularz rejestracji nowego zabiegu weterynaryjnego. */
 
-function FormularzZabiegu() {
+function TreatmentFormPage() {
   const navigate = useNavigate();
-  const { ladowanie, blad, dodaj } = useZabiegStore();
+  const { ladowanie: isLoading, blad: error, dodaj: createTreatment } = useZabiegStore();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(schematZabiegu),
+    resolver: zodResolver(treatmentSchema),
   });
 
-  const onSubmit = async (dane) => {
-    const sukces = await dodaj(dane);
-    if (sukces) {
+  const onSubmit = async (formData) => {
+    const isSuccess = await createTreatment(formData);
+    if (isSuccess) {
       navigate('/zabiegi');
     }
   };
@@ -47,18 +47,18 @@ function FormularzZabiegu() {
   return (
     <div>
       <Header
-        tytul="Dodawanie zabiegu"
-        podtytul="Zarejestruj nowy zabieg weterynaryjny"
+        tytul="Add treatment"
+        podtytul="Register a new veterinary treatment"
       />
 
       <div className={formStyles.formPage}>
-        {blad && <Alert typ="error">{blad}</Alert>}
+        {error && <Alert typ="error">{error}</Alert>}
 
         <div className={formStyles.formCard}>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className={formStyles.formGrid}>
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="nazwa">Nazwa zabiegu</label>
+                <label className={formStyles.label} htmlFor="nazwa">Treatment name</label>
                 <input
                   id="nazwa"
                   type="text"
@@ -72,7 +72,7 @@ function FormularzZabiegu() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="dataZabiegu">Data zabiegu</label>
+                <label className={formStyles.label} htmlFor="dataZabiegu">Treatment date</label>
                 <input
                   id="dataZabiegu"
                   type="date"
@@ -85,11 +85,11 @@ function FormularzZabiegu() {
               </div>
 
               <div className={`${formStyles.formGroup} ${formStyles.formGroupFull}`}>
-                <label className={formStyles.label} htmlFor="opis">Opis</label>
+                <label className={formStyles.label} htmlFor="opis">Description</label>
                 <textarea
                   id="opis"
                   className={`${formStyles.textarea} ${errors.opis ? formStyles.inputError : ''}`}
-                  placeholder="Szczegolowy opis zabiegu (opcjonalnie)"
+                  placeholder="Detailed treatment description (optional)"
                   {...register('opis')}
                 />
                 {errors.opis && (
@@ -98,7 +98,7 @@ function FormularzZabiegu() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="koszt">Koszt (PLN)</label>
+                <label className={formStyles.label} htmlFor="koszt">Cost (PLN)</label>
                 <input
                   id="koszt"
                   type="number"
@@ -113,7 +113,7 @@ function FormularzZabiegu() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="idZwierzecia">ID zwierzecia</label>
+                <label className={formStyles.label} htmlFor="idZwierzecia">Animal ID</label>
                 <input
                   id="idZwierzecia"
                   type="number"
@@ -126,7 +126,7 @@ function FormularzZabiegu() {
               </div>
 
               <div className={formStyles.formGroup}>
-                <label className={formStyles.label} htmlFor="idLekarza">ID lekarza</label>
+                <label className={formStyles.label} htmlFor="idLekarza">Doctor ID</label>
                 <input
                   id="idLekarza"
                   type="number"
@@ -140,10 +140,10 @@ function FormularzZabiegu() {
 
               <div className={formStyles.formActions}>
                 <Button wariant="secondary" onClick={() => navigate('/zabiegi')}>
-                  Anuluj
+                  Cancel
                 </Button>
-                <Button wariant="primary" type="submit" disabled={ladowanie}>
-                  {ladowanie ? 'Zapisywanie...' : 'Dodaj zabieg'}
+                <Button wariant="primary" type="submit" disabled={isLoading}>
+                  {isLoading ? 'Saving...' : 'Add treatment'}
                 </Button>
               </div>
             </div>
@@ -154,4 +154,4 @@ function FormularzZabiegu() {
   );
 }
 
-export default FormularzZabiegu;
+export default TreatmentFormPage;

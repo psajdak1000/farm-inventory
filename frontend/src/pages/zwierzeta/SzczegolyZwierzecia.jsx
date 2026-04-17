@@ -9,85 +9,91 @@ import styles from './SzczegolyZwierzecia.module.css';
    ID zwierzecia pochodzi z parametru URL (useParams).
    Strona demonstrje uzycie parametrow URL zgodnie z wymaganiem routingu. */
 
-function SzczegolyZwierzecia() {
-  const { id } = useParams();
+function AnimalDetailsPage() {
+  const { id: animalId } = useParams();
   const navigate = useNavigate();
-  const { wybraneZwierze, ladowanie, blad, pobierzPoId, wyczyscWybrane } = useZwierzeStore();
+  const {
+    wybraneZwierze: selectedAnimal,
+    ladowanie: isLoading,
+    blad: error,
+    pobierzPoId: fetchAnimalById,
+    wyczyscWybrane: clearSelectedAnimal,
+  } = useZwierzeStore();
 
   useEffect(() => {
-    pobierzPoId(Number(id));
-    return () => wyczyscWybrane();
-  }, [id, pobierzPoId, wyczyscWybrane]);
+    fetchAnimalById(Number(animalId));
+    return () => clearSelectedAnimal();
+  }, [animalId, fetchAnimalById, clearSelectedAnimal]);
 
   return (
     <div>
       <Header
-        tytul="Szczegoly zwierzecia"
-        podtytul={`Identyfikator: ${id}`}
+        tytul="Animal details"
+        podtytul={`ID: ${animalId}`}
       >
         <Button wariant="outline" onClick={() => navigate('/zwierzeta')}>
-          Powrot do listy
+          Back to list
         </Button>
-        <Link to={`/zwierzeta/${id}/edytuj`}>
-          <Button wariant="primary">Edytuj</Button>
+        <Link to={`/zwierzeta/${animalId}/edytuj`}>
+          <Button wariant="primary">Edit</Button>
         </Link>
       </Header>
 
       <div className={styles.detailPage}>
-        {ladowanie && <Loader tekst="Ladowanie danych zwierzecia..." />}
-        {blad && <Alert typ="error">{blad}</Alert>}
+        {isLoading && <Loader tekst="Loading animal data..." />}
+        {error && <Alert typ="error">{error}</Alert>}
 
-        {!ladowanie && !blad && wybraneZwierze && (
+        {!isLoading && !error && selectedAnimal && (
           <div className={styles.detailCard}>
             <div className={styles.detailGrid}>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Numer kolczyka</span>
+                <span className={styles.detailLabel}>Ear tag number</span>
                 <span className={styles.detailValue}>
-                  {wybraneZwierze.identyfikatorKolczyka}
+                  {selectedAnimal.identyfikatorKolczyka}
                 </span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Rasa</span>
-                <span className={styles.detailValue}>{wybraneZwierze.rasa}</span>
+                <span className={styles.detailLabel}>Breed</span>
+                <span className={styles.detailValue}>{selectedAnimal.rasa}</span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Plec</span>
-                <span className={styles.detailValue}>{wybraneZwierze.plec}</span>
+                <span className={styles.detailLabel}>Sex</span>
+                <span className={styles.detailValue}>{selectedAnimal.plec}</span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Wiek</span>
-                <span className={styles.detailValue}>{wybraneZwierze.wiek} lat</span>
+                <span className={styles.detailLabel}>Age</span>
+                <span className={styles.detailValue}>{selectedAnimal.wiek} years</span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Waga</span>
-                <span className={styles.detailValue}>{wybraneZwierze.waga} kg</span>
+                <span className={styles.detailLabel}>Weight</span>
+                <span className={styles.detailValue}>{selectedAnimal.waga} kg</span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Data zakupu / urodzenia</span>
+                <span className={styles.detailLabel}>Purchase / birth date</span>
                 <span className={styles.detailValue}>
-                  {wybraneZwierze.dataZakupuUrodzenia}
+                  {selectedAnimal.dataZakupuUrodzenia}
                 </span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Cena zakupu</span>
+                <span className={styles.detailLabel}>Purchase price</span>
                 <span className={styles.detailValue}>
-                  {wybraneZwierze.cenaZakupu
-                    ? `${wybraneZwierze.cenaZakupu} PLN`
-                    : 'Nie podano'}
+                  {selectedAnimal.cenaZakupu
+                    ? `${selectedAnimal.cenaZakupu} PLN`
+                    : 'Not provided'}
                 </span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Data sprzedazy / smierci</span>
+                <span className={styles.detailLabel}>Sale / death date</span>
                 <span className={styles.detailValue}>
-                  {wybraneZwierze.dataSprzedazySmierci || 'Brak'}
+                  {selectedAnimal.dataSprzedazySmierci || 'None'}
                 </span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Cena sprzedazy</span>
+                <span className={styles.detailLabel}>Sale price</span>
                 <span className={styles.detailValue}>
-                  {wybraneZwierze.cenaSprzedazy
-                    ? `${wybraneZwierze.cenaSprzedazy} PLN`
-                    : 'Nie dotyczy'}
+                  {selectedAnimal.cenaSprzedazy
+                    ? `${selectedAnimal.cenaSprzedazy} PLN`
+                    : 'N/A'}
                 </span>
               </div>
             </div>
@@ -98,4 +104,4 @@ function SzczegolyZwierzecia() {
   );
 }
 
-export default SzczegolyZwierzecia;
+export default AnimalDetailsPage;

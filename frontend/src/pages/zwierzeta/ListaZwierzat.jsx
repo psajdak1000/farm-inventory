@@ -10,101 +10,107 @@ import styles from './Zwierzeta.module.css';
    Obsluguje trzy stany: ladowanie, blad, sukces (z danymi lub pusta lista).
    Kazdy wiersz tabeli zawiera przyciski akcji: podglad, edycja, usuwanie. */
 
-function ListaZwierzat() {
-  const { zwierzeta, ladowanie, blad, pobierzWszystkie, usun } = useZwierzeStore();
+function AnimalListPage() {
+  const {
+    zwierzeta: animals,
+    ladowanie: isLoading,
+    blad: error,
+    pobierzWszystkie: fetchAllAnimals,
+    usun: deleteAnimal,
+  } = useZwierzeStore();
   const navigate = useNavigate();
-  const [usuwaneId, setUsuwaneId] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   /* Pobranie danych przy montowaniu komponentu */
   useEffect(() => {
-    pobierzWszystkie();
-  }, [pobierzWszystkie]);
+    fetchAllAnimals();
+  }, [fetchAllAnimals]);
 
   /* Obsluga usuwania — otwiera modal potwierdzenia */
-  const handleUsun = async () => {
-    if (usuwaneId) {
-      await usun(usuwaneId);
-      setUsuwaneId(null);
+  const handleDelete = async () => {
+    if (pendingDeleteId) {
+      await deleteAnimal(pendingDeleteId);
+      setPendingDeleteId(null);
     }
   };
 
   return (
     <div className={styles.pageWrapper}>
       <Header
-        tytul="Zwierzeta"
-        podtytul="Lista wszystkich zwierzat w gospodarstwie"
+        tytul="Animals"
+        podtytul="List of all animals on the farm"
       >
         <Button wariant="primary" onClick={() => navigate('/zwierzeta/dodaj')}>
-          Dodaj zwierze
+          Add animal
         </Button>
       </Header>
 
       <main style={{ padding: 'var(--spacing-2xl)' }}>
         {/* Stan ladowania */}
-        {ladowanie && <Loader tekst="Pobieranie listy zwierzat..." />}
+        {isLoading && <Loader tekst="Loading animal list..." />}
 
         {/* Stan bledu */}
-        {blad && <Alert typ="error">{blad}</Alert>}
+        {error && <Alert typ="error">{error}</Alert>}
 
         {/* Stan pustej listy */}
-        {!ladowanie && !blad && zwierzeta.length === 0 && (
+        {!isLoading && !error && animals.length === 0 && (
           <EmptyState
-            tytul="Brak zwierzat"
-            opis="Nie dodano jeszcze zadnego zwierzecia do systemu. Kliknij przycisk powyzej, aby dodac pierwsze zwierze."
+            tytul="No animals"
+            opis="No animals have been added yet. Click the button above to add the first one."
           />
         )}
 
         {/* Tabela z danymi */}
-        {!ladowanie && !blad && zwierzeta.length > 0 && (
+        {!isLoading && !error && animals.length > 0 && (
           <div className={styles.tableCard}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Nr kolczyka</th>
-                  <th>Rasa</th>
-                  <th>Plec</th>
-                  <th>Wiek</th>
-                  <th>Waga (kg)</th>
-                  <th>Data zakupu/urodzenia</th>
-                  <th style={{ textAlign: 'right' }}>Akcje</th>
+                  <th>Ear tag no.</th>
+                  <th>Breed</th>
+                  <th>Sex</th>
+                  <th>Age</th>
+                  <th>Weight (kg)</th>
+                  <th>Purchase/Birth date</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {zwierzeta.map((zwierze) => (
-                  <tr key={zwierze.idZwierzecia}>
-                    <td>{zwierze.identyfikatorKolczyka}</td>
-                    <td>{zwierze.rasa}</td>
+                {animals.map((animal) => (
+                  <tr key={animal.idZwierzecia}>
+                    <td>{animal.identyfikatorKolczyka}</td>
+                    <td>{animal.rasa}</td>
                     <td>
                       <span
                         className={`${styles.badge} ${
-                          zwierze.plec === 'Samiec' ? styles.badgeMale : styles.badgeFemale
+                          animal.plec === 'Samiec' ? styles.badgeMale : styles.badgeFemale
                         }`}
                       >
-                        {zwierze.plec}
+                        {animal.plec}
                       </span>
                     </td>
-                    <td>{zwierze.wiek} lat</td>
-                    <td>{zwierze.waga}</td>
-                    <td>{zwierze.dataZakupuUrodzenia}</td>
+                    <td>{animal.wiek} years</td>
+                    <td>{animal.waga}</td>
+                    <td>{animal.dataZakupuUrodzenia}</td>
                     <td>
                       <div className={styles.actionsCell}>
                         <Link
-                          to={`/zwierzeta/${zwierze.idZwierzecia}`}
+                          to={`/zwierzeta/${animal.idZwierzecia}`}
                           className={`${styles.actionButton} ${styles.viewButton}`}
                         >
-                          Podglad
+                          View
                         </Link>
                         <Link
-                          to={`/zwierzeta/${zwierze.idZwierzecia}/edytuj`}
+                          to={`/zwierzeta/${animal.idZwierzecia}/edytuj`}
                           className={`${styles.actionButton} ${styles.editButton}`}
                         >
-                          Edytuj
+                          Edit
                         </Link>
                         <button
                           className={`${styles.actionButton} ${styles.deleteButton}`}
-                          onClick={() => setUsuwaneId(zwierze.idZwierzecia)}
+                          onClick={() => setPendingDeleteId(animal.idZwierzecia)}
                         >
-                          Usun
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -117,17 +123,17 @@ function ListaZwierzat() {
       </main>
 
       {/* Modal potwierdzenia usuwania */}
-      {usuwaneId && (
+      {pendingDeleteId && (
         <ConfirmModal
-          tytul="Usuwanie zwierzecia"
-          tresc="Czy na pewno chcesz usunac to zwierze? Tej operacji nie mozna cofnac."
-          onPotwierdz={handleUsun}
-          onAnuluj={() => setUsuwaneId(null)}
-          ladowanie={ladowanie}
+          tytul="Delete animal"
+          tresc="Are you sure you want to delete this animal? This action cannot be undone."
+          onPotwierdz={handleDelete}
+          onAnuluj={() => setPendingDeleteId(null)}
+          ladowanie={isLoading}
         />
       )}
     </div>
   );
 }
 
-export default ListaZwierzat;
+export default AnimalListPage;

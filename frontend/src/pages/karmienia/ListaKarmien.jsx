@@ -9,72 +9,78 @@ import tableStyles from '../zwierzeta/Zwierzeta.module.css';
    Struktura analogiczna do ListaZwierzat — pobiera dane z API,
    obsluguje stany ladowania/bledu/pustej listy. */
 
-function ListaKarmien() {
-  const { karmienia, ladowanie, blad, pobierzWszystkie, usun } = useKarmienieStore();
+function FeedingListPage() {
+  const {
+    karmienia: feedings,
+    ladowanie: isLoading,
+    blad: error,
+    pobierzWszystkie: fetchAllFeedings,
+    usun: deleteFeeding,
+  } = useKarmienieStore();
   const navigate = useNavigate();
-  const [usuwaneId, setUsuwaneId] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   useEffect(() => {
-    pobierzWszystkie();
-  }, [pobierzWszystkie]);
+    fetchAllFeedings();
+  }, [fetchAllFeedings]);
 
-  const handleUsun = async () => {
-    if (usuwaneId) {
-      await usun(usuwaneId);
-      setUsuwaneId(null);
+  const handleDelete = async () => {
+    if (pendingDeleteId) {
+      await deleteFeeding(pendingDeleteId);
+      setPendingDeleteId(null);
     }
   };
 
   return (
     <div className={tableStyles.pageWrapper}>
       <Header
-        tytul="Karmienia"
-        podtytul="Ewidencja karmien i kosztow pasz"
+        tytul="Feedings"
+        podtytul="Feeding records and feed costs"
       >
         <Button wariant="primary" onClick={() => navigate('/karmienia/dodaj')}>
-          Dodaj karmienie
+          Add feeding
         </Button>
       </Header>
 
       <main style={{ padding: 'var(--spacing-2xl)' }}>
-        {ladowanie && <Loader tekst="Pobieranie listy karmien..." />}
-        {blad && <Alert typ="error">{blad}</Alert>}
+        {isLoading && <Loader tekst="Loading feeding list..." />}
+        {error && <Alert typ="error">{error}</Alert>}
 
-        {!ladowanie && !blad && karmienia.length === 0 && (
+        {!isLoading && !error && feedings.length === 0 && (
           <EmptyState
-            tytul="Brak karmien"
-            opis="Nie zarejestrowano jeszcze zadnego karmienia. Kliknij przycisk powyzej, aby dodac pierwszy wpis."
+            tytul="No feedings"
+            opis="No feeding has been recorded yet. Click the button above to add the first entry."
           />
         )}
 
-        {!ladowanie && !blad && karmienia.length > 0 && (
+        {!isLoading && !error && feedings.length > 0 && (
           <div className={tableStyles.tableCard}>
             <table className={tableStyles.table}>
               <thead>
                 <tr>
-                  <th>Nazwa paszy</th>
-                  <th>Rodzaj</th>
-                  <th>Ilosc</th>
-                  <th>Cena (PLN)</th>
-                  <th>Data zakupu</th>
-                  <th style={{ textAlign: 'right' }}>Akcje</th>
+                  <th>Feed name</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Price (PLN)</th>
+                  <th>Purchase date</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {karmienia.map((karmienie) => (
-                  <tr key={karmienie.idKarmienia}>
-                    <td>{karmienie.nazwa}</td>
-                    <td>{karmienie.rodzaj}</td>
-                    <td>{karmienie.ilosc}</td>
-                    <td>{karmienie.cena} PLN</td>
-                    <td>{karmienie.dataZakupu}</td>
+                {feedings.map((feeding) => (
+                  <tr key={feeding.idKarmienia}>
+                    <td>{feeding.nazwa}</td>
+                    <td>{feeding.rodzaj}</td>
+                    <td>{feeding.ilosc}</td>
+                    <td>{feeding.cena} PLN</td>
+                    <td>{feeding.dataZakupu}</td>
                     <td>
                       <div className={tableStyles.actionsCell}>
                         <button
                           className={`${tableStyles.actionButton} ${tableStyles.deleteButton}`}
-                          onClick={() => setUsuwaneId(karmienie.idKarmienia)}
+                          onClick={() => setPendingDeleteId(feeding.idKarmienia)}
                         >
-                          Usun
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -86,17 +92,17 @@ function ListaKarmien() {
         )}
       </main>
 
-      {usuwaneId && (
+      {pendingDeleteId && (
         <ConfirmModal
-          tytul="Usuwanie karmienia"
-          tresc="Czy na pewno chcesz usunac ten wpis karmienia?"
-          onPotwierdz={handleUsun}
-          onAnuluj={() => setUsuwaneId(null)}
-          ladowanie={ladowanie}
+          tytul="Delete feeding"
+          tresc="Are you sure you want to delete this feeding entry?"
+          onPotwierdz={handleDelete}
+          onAnuluj={() => setPendingDeleteId(null)}
+          ladowanie={isLoading}
         />
       )}
     </div>
   );
 }
 
-export default ListaKarmien;
+export default FeedingListPage;
