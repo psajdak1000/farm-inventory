@@ -1,0 +1,40 @@
+/* ============================================
+   Szczegoly rekordu — widok pojedynczego elementu
+   ============================================ */
+
+.detailPage {
+  padding: var(--spacing-2xl);
+}
+
+.detailCard {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-2xl);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-xl);
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.detailLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detailValue {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}

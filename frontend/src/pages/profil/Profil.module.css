@@ -1,0 +1,79 @@
+/* ============================================
+   Profil uzytkownika
+   ============================================ */
+
+.profilPage {
+  padding: var(--spacing-2xl);
+}
+
+.profilCard {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-2xl);
+  max-width: 720px;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast);
+  background-color: var(--color-white);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.input:disabled {
+  background-color: var(--color-gray-100);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.inputError {
+  border-color: var(--color-danger);
+}
+
+.errorMessage {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+}
