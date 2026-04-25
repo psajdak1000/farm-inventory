@@ -43,6 +43,10 @@ function Sidebar() {
             <span className={styles.navIcon}>&#9751;</span>
             Home
           </NavLink>
+          <NavLink to="/kpi" className={getLinkClass}>
+            <span className={styles.navIcon}>&#9724;</span>
+            KPI
+          </NavLink>
         </div>
 
         {/* Sekcja operacyjna — rozna w zaleznosci od roli */}

@@ -11,6 +11,7 @@ import RegistrationPage from './pages/auth/RegistrationPage';
 
 /* Strony chronione */
 import HomePage from './pages/HomePage';
+import KpiDashboardPage from './pages/KpiDashboardPage';
 import ListaZwierzat from './pages/zwierzeta/ListaZwierzat';
 import SzczegolyZwierzecia from './pages/zwierzeta/SzczegolyZwierzecia';
 import FormularzZwierzecia from './pages/zwierzeta/FormularzZwierzecia';
@@ -47,6 +48,7 @@ function AppContent() {
         }
       >
         <Route index element={<HomePage />} />
+        <Route path="kpi" element={<KpiDashboardPage />} />
 
         <Route path="zwierzeta" element={<ListaZwierzat />} />
         <Route path="zwierzeta/:id" element={<SzczegolyZwierzecia />} />

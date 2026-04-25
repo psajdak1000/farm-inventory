@@ -7,24 +7,28 @@ import styles from './StronaGlowna.module.css';
    Displays quick-access cards based on the user role. */
 
 function HomePage() {
-  const { uzytkownik, rola } = useAuthStore();
+  const { uzytkownik: user, rola: role } = useAuthStore();
+
+  const canSeeAnimals = role === 'Wlasciciel' || role === 'Administrator' || role === 'Lekarz';
+  const canSeeFeedings = role === 'Wlasciciel' || role === 'Administrator';
+  const canSeeTreatments = role === 'Wlasciciel' || role === 'Administrator' || role === 'Lekarz';
 
   return (
     <div>
       <Header
-        title={`Welcome, ${uzytkownik?.imie || 'User'}`}
+        title={`Welcome, ${user?.imie || 'User'}`}
         subtitle="Farm inventory management panel"
       />
 
       <main className={styles.dashboard}>
         <div className={styles.cardsGrid}>
           {/* Card — Animals */}
-          {(rola === 'Wlasciciel' || rola === 'Administrator' || rola === 'Lekarz') && (
+          {canSeeAnimals && (
             <Link to="/zwierzeta" className={styles.card}>
               <div className={styles.cardIcon}>&#9670;</div>
               <h3 className={styles.cardTitle}>Animals</h3>
               <p className={styles.cardDescription}>
-                {rola === 'Lekarz'
+                {role === 'Lekarz'
                   ? 'Browse the animal records in the system'
                   : 'Manage animal records on the farm'}
               </p>
@@ -32,7 +36,7 @@ function HomePage() {
           )}
 
           {/* Card — Feedings */}
-          {(rola === 'Wlasciciel' || rola === 'Administrator') && (
+          {canSeeFeedings && (
             <Link to="/karmienia" className={styles.card}>
               <div className={styles.cardIcon}>&#9671;</div>
               <h3 className={styles.cardTitle}>Feedings</h3>
@@ -43,7 +47,7 @@ function HomePage() {
           )}
 
           {/* Card — Treatments */}
-          {(rola === 'Wlasciciel' || rola === 'Administrator' || rola === 'Lekarz') && (
+          {canSeeTreatments && (
             <Link to="/zabiegi" className={styles.card}>
               <div className={styles.cardIcon}>&#9672;</div>
               <h3 className={styles.cardTitle}>Treatments</h3>
@@ -61,7 +65,7 @@ function HomePage() {
           </Link>
 
           {/* Card — Administration */}
-          {rola === 'Administrator' && (
+          {role === 'Administrator' && (
             <Link to="/admin/uzytkownicy" className={styles.card}>
               <div className={styles.cardIcon}>&#9673;</div>
               <h3 className={styles.cardTitle}>Administration</h3>

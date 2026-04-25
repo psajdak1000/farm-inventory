@@ -6,6 +6,63 @@
   padding: var(--spacing-2xl);
 }
 
+.kpiSection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.kpiHeading {
+  margin-bottom: var(--spacing-md);
+}
+
+.kpiTitle {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-xs);
+}
+
+.kpiSubtitle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.kpiCard {
+  background: linear-gradient(135deg, var(--color-bg-secondary), var(--color-primary-subtle));
+  border: 1px solid var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.kpiLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.kpiValue {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-dark);
+  line-height: var(--line-height-tight);
+}
+
+.kpiHelper {
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.kpiLoadingText {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
 .cardsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
