@@ -23,7 +23,7 @@ public partial class Database : IdentityDbContext<User>
     public virtual DbSet<Lekarz> Lekarzs { get; set; }
     public virtual DbSet<Wlasciciel> Wlasciciels { get; set; }
     public virtual DbSet<Zabieg> Zabiegs { get; set; }
-    public virtual DbSet<Zwierze> Zwierzes { get; set; }
+    public virtual DbSet<Animal> Animals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,7 +65,7 @@ public partial class Database : IdentityDbContext<User>
             entity.Property(e => e.IdZwierzecia).HasColumnName("ID_Zwierzecia");
 
             entity.HasOne(d => d.IdZwierzeciaNavigation)
-                .WithMany(p => p.Karmienies)
+                .WithMany(p => p.Feedings)
                 .HasForeignKey(d => d.IdZwierzecia)
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
@@ -111,31 +111,24 @@ public partial class Database : IdentityDbContext<User>
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasOne(d => d.IdZwierzeciaNavigation)
-                .WithMany(p => p.Zabiegs)
+                .WithMany(p => p.Procedures)
                 .HasForeignKey(d => d.IdZwierzecia)
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
-        modelBuilder.Entity<Zwierze>(entity =>
+        modelBuilder.Entity<Animal>(entity =>
         {
-            entity.ToTable("zwierze");
-            entity.HasKey(e => e.IdZwierzecia);
+            entity.ToTable("animals");
+            entity.HasKey(e => e.Id);
 
-            entity.Property(e => e.IdZwierzecia).HasColumnName("ID_Zwierzecia");
-            entity.Property(e => e.IdentyfikatorKolczyka).HasColumnName("Identyfikator kolczyka");
-            entity.Property(e => e.Rasa).HasMaxLength(50);
-            entity.Property(e => e.Wiek);
-            entity.Property(e => e.Płeć).HasMaxLength(10);
-            entity.Property(e => e.Waga);
-            entity.Property(e => e.DataZakupuUrodzenia).HasColumnName("Data zakupu/urodzenia");
-            entity.Property(e => e.CenaZakupu).HasPrecision(10, 2).HasColumnName("Cena zakupu");
-            entity.Property(e => e.DataSprzedażyŚmierci).HasColumnName("Data sprzedaży/śmierci");
-            entity.Property(e => e.CenaSprzedaży).HasPrecision(10, 2).HasColumnName("Cena sprzedaży");
-            entity.Property(e => e.IdGospodarstwa).HasColumnName("ID_Gospodarstwa");
+            entity.Property(e => e.Breed).HasMaxLength(50);
+            entity.Property(e => e.Sex).HasMaxLength(10);
+            entity.Property(e => e.PurchasePrice).HasPrecision(10, 2);
+            entity.Property(e => e.SalePrice).HasPrecision(10, 2);
 
-            entity.HasOne(d => d.IdGospodarstwaNavigation)
-                .WithMany(p => p.Zwierzes)
-                .HasForeignKey(d => d.IdGospodarstwa)
+            entity.HasOne(d => d.Farm)
+                .WithMany(p => p.Animals)
+                .HasForeignKey(d => d.FarmId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
         });
 

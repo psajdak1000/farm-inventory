@@ -19,5 +19,5 @@ public partial class Karmienie
 
     public int IdZwierzecia { get; set; }
 
-    public virtual Zwierze IdZwierzeciaNavigation { get; set; } = null!;
+    public virtual Animal IdZwierzeciaNavigation { get; set; } = null!;
 }

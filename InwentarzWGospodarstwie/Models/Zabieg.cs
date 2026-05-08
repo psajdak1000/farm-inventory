@@ -21,5 +21,5 @@ public partial class Zabieg
 
     public virtual Lekarz IdLekarzaNavigation { get; set; } = null!;
 
-    public virtual Zwierze IdZwierzeciaNavigation { get; set; } = null!;
+    public virtual Animal IdZwierzeciaNavigation { get; set; } = null!;
 }

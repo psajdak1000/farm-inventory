@@ -45,7 +45,7 @@ public class KarmieniaController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<KarmienieResponse>> Create([FromBody] KarmienieUpsertRequest request)
     {
-        var animalExists = await _context.Zwierzes.AnyAsync(z => z.IdZwierzecia == request.IdZwierzecia);
+        var animalExists = await _context.Animals.AnyAsync(a => a.Id == request.IdZwierzecia);
         if (!animalExists)
         {
             return BadRequest("Nie istnieje zwierze o podanym IdZwierzecia.");
@@ -76,7 +76,7 @@ public class KarmieniaController : ControllerBase
             return NotFound();
         }
 
-        var animalExists = await _context.Zwierzes.AnyAsync(z => z.IdZwierzecia == request.IdZwierzecia);
+        var animalExists = await _context.Animals.AnyAsync(a => a.Id == request.IdZwierzecia);
         if (!animalExists)
         {
             return BadRequest("Nie istnieje zwierze o podanym IdZwierzecia.");

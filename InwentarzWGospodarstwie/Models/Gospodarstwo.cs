@@ -19,5 +19,5 @@ public partial class Gospodarstwo
 
     public virtual Wlasciciel IdWlascicielaNavigation { get; set; } = null!;
 
-    public virtual ICollection<Zwierze> Zwierzes { get; set; } = new List<Zwierze>();
+    public virtual ICollection<Animal> Animals { get; set; } = new List<Animal>();
 }
