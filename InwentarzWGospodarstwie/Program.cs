@@ -14,6 +14,7 @@ builder.Services.AddDbContext<Database>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddHttpClient<IHuggingFaceService, HuggingFaceService>();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is missing.");
