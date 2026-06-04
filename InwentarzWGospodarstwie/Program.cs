@@ -16,6 +16,14 @@ builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddHttpClient<IHuggingFaceService, HuggingFaceService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendCors", policy =>
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is missing.");
 var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("Jwt:Audience is missing.");
@@ -82,6 +90,7 @@ app.UseSwaggerUI();// udostepnia stone html pod swagger
 app.UseHttpsRedirection();
 
 app.UseRouting();
+app.UseCors("FrontendCors");
 app.UseAuthentication();
 app.UseAuthorization();
 

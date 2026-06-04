@@ -1,0 +1,111 @@
+/* ============================================
+   Tabela danych — lista rekordow
+   ============================================ */
+
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableCard {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background-color: var(--color-gray-50);
+  border-bottom: 2px solid var(--color-gray-200);
+}
+
+.table th {
+  padding: var(--spacing-md) var(--spacing-lg);
+  text-align: left;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-gray-50);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Kolumna akcji — przyciski edycji i usuwania */
+.actionsCell {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+}
+
+.actionButton {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.editButton {
+  color: var(--color-info);
+  background-color: #eff6ff;
+}
+
+.editButton:hover {
+  background-color: #dbeafe;
+}
+
+.deleteButton {
+  color: var(--color-danger);
+  background-color: #fef2f2;
+}
+
+.deleteButton:hover {
+  background-color: #fecaca;
+}
+
+.viewButton {
+  color: var(--color-primary);
+  background-color: var(--color-primary-subtle);
+}
+
+.viewButton:hover {
+  background-color: #b7e4c7;
+}
+
+/* Badge — oznaczenie statusu lub plci */
+.badge {
+  display: inline-block;
+  padding: 2px var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+}
+
+.badgeMale {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badgeFemale {
+  background-color: #fce7f3;
+  color: #9d174d;
+}
