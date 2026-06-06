@@ -1,85 +1,41 @@
 import { create } from 'zustand';
+import animalService from '../services/animalService';
 
-/* Flag for demo mode — test data instead of API requests.
-   After connecting the backend change to false and uncomment the service import. */
-const DEMO_MODE = true;
+const getErrorMessage = (error, fallbackMessage) => {
+  const apiData = error?.response?.data;
 
-/* import animalService from '../services/animalService'; */
+  if (typeof apiData === 'string' && apiData.trim()) {
+    return apiData;
+  }
 
-/* Test data for animals */
-const DEMO_ANIMALS = [
-  {
-    animalId: 1,
-    eartagId: 'PL005123456789',
-    breed: 'Holstein-Friesian',
-    gender: 'Samica',
-    age: 4,
-    weight: 620,
-    purchaseOrBirthDate: '2022-03-15',
-    purchasePrice: 4500.00,
-    saleOrDeathDate: null,
-    salePrice: null,
-    farmId: 1,
-  },
-  {
-    animalId: 2,
-    eartagId: 'PL005987654321',
-    breed: 'Simental',
-    gender: 'Samiec',
-    age: 2,
-    weight: 480,
-    purchaseOrBirthDate: '2024-01-10',
-    purchasePrice: 3800.00,
-    saleOrDeathDate: null,
-    salePrice: null,
-    farmId: 1,
-  },
-  {
-    animalId: 3,
-    eartagId: 'PL005111222333',
-    breed: 'Limousin',
-    gender: 'Samica',
-    age: 3,
-    weight: 550,
-    purchaseOrBirthDate: '2023-06-20',
-    purchasePrice: 5200.00,
-    saleOrDeathDate: null,
-    salePrice: null,
-    farmId: 1,
-  },
-  {
-    animalId: 4,
-    eartagId: 'PL005444555666',
-    breed: 'Charolaise',
-    gender: 'Samiec',
-    age: 1,
-    weight: 320,
-    purchaseOrBirthDate: '2025-02-05',
-    purchasePrice: null,
-    saleOrDeathDate: null,
-    salePrice: null,
-    farmId: 1,
-  },
-  {
-    animalId: 5,
-    eartagId: 'PL005777888999',
-    breed: 'Polska czerwona',
-    gender: 'Samica',
-    age: 5,
-    weight: 590,
-    purchaseOrBirthDate: '2021-09-12',
-    purchasePrice: 3200.00,
-    saleOrDeathDate: null,
-    salePrice: null,
-    farmId: 1,
-  },
-];
+  if (apiData && typeof apiData === 'object') {
+    const validationMessages = Object.values(apiData.errors ?? {})
+      .flatMap((entry) => (Array.isArray(entry) ? entry : []))
+      .filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
 
-/* Store responsible for animal data in the application.
-   Central access point for the animal list for all components.
-   Handles three view states: loading, success, error. */
+    if (validationMessages.length > 0) {
+      return validationMessages.join(' ');
+    }
+  }
 
-let nextId = 6;
+  if (typeof apiData?.message === 'string' && apiData.message.trim()) {
+    return apiData.message;
+  }
+
+  if (typeof apiData?.error === 'string' && apiData.error.trim()) {
+    return apiData.error;
+  }
+
+  if (typeof apiData?.title === 'string' && apiData.title.trim()) {
+    return apiData.title;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+};
 
 const useAnimalStore = create((set, get) => ({
   animals: [],
@@ -87,88 +43,92 @@ const useAnimalStore = create((set, get) => ({
   isLoading: false,
   error: null,
 
-  /* Fetch entire animal list */
   fetchAll: async () => {
     set({ isLoading: true, error: null });
 
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const current = get().animals;
-      if (current.length === 0) {
-        set({ animals: [...DEMO_ANIMALS], isLoading: false });
-      } else {
-        set({ isLoading: false });
-      }
-      return;
+    try {
+      const animals = await animalService.fetchAll();
+      set({ animals });
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Failed to fetch animals.') });
+    } finally {
+      set({ isLoading: false });
     }
   },
 
-  /* Fetch a single animal by ID */
   fetchById: async (id) => {
     set({ isLoading: true, error: null });
 
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const list = get().animals.length > 0 ? get().animals : DEMO_ANIMALS;
-      const found = list.find((z) => z.animalId === id);
-      if (found) {
-        set({ selectedAnimal: found, isLoading: false });
-      } else {
-        set({ error: 'Nie znaleziono zwierzecia o podanym ID', isLoading: false });
-      }
-      return;
+    try {
+      const animal = await animalService.fetchById(id);
+      set({ selectedAnimal: animal });
+    } catch (error) {
+      set({
+        selectedAnimal: null,
+        error: getErrorMessage(error, 'Animal with the specified ID was not found.'),
+      });
+    } finally {
+      set({ isLoading: false });
     }
   },
 
-  /* Add a new animal */
   add: async (data) => {
     set({ isLoading: true, error: null });
 
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const newAnimal = { ...data, animalId: nextId++ };
+    try {
+      const createdAnimal = await animalService.add(data);
       set((state) => ({
-        animals: [...state.animals, newAnimal],
-        isLoading: false,
+        animals: [...state.animals, createdAnimal],
       }));
       return true;
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Failed to add animal.') });
+      return false;
+    } finally {
+      set({ isLoading: false });
     }
-
-    return false;
   },
 
-  /* Update animal data */
   update: async (id, data) => {
     set({ isLoading: true, error: null });
 
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
+    try {
+      const updatedAnimal = await animalService.update(id, data);
       set((state) => ({
-        animals: state.animals.map((z) =>
-          z.animalId === id ? { ...z, ...data } : z
+        animals: state.animals.map((animal) =>
+          animal.animalId === updatedAnimal.animalId ? updatedAnimal : animal
         ),
-        isLoading: false,
+        selectedAnimal:
+          state.selectedAnimal?.animalId === updatedAnimal.animalId
+            ? updatedAnimal
+            : state.selectedAnimal,
       }));
       return true;
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Failed to update animal.') });
+      return false;
+    } finally {
+      set({ isLoading: false });
     }
-
-    return false;
   },
 
-  /* Remove an animal */
   remove: async (id) => {
     set({ isLoading: true, error: null });
 
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    try {
+      await animalService.remove(id);
       set((state) => ({
-        animals: state.animals.filter((z) => z.animalId !== id),
-        isLoading: false,
+        animals: state.animals.filter((animal) => animal.animalId !== id),
+        selectedAnimal:
+          state.selectedAnimal?.animalId === id ? null : state.selectedAnimal,
       }));
       return true;
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Failed to delete animal.') });
+      return false;
+    } finally {
+      set({ isLoading: false });
     }
-
-    return false;
   },
 
   clearSelected: () => set({ selectedAnimal: null }),

@@ -1,30 +1,36 @@
 import apiClient from './apiClient';
 
-/* Serwis odpowiedzialny za operacje autoryzacyjne.
-   Komunikuje się z endpointami backendu dotyczącymi kont użytkowników. */
+const AUTH_STORAGE_KEYS = [
+  'authToken',
+  'userRole',
+  'demoUser',
+  'authUser',
+  'authProfile',
+  'authMe',
+];
+
+export const clearAuthStorage = () => {
+  AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+};
 
 const authService = {
-  /* Rejestracja nowego użytkownika */
-  register: async (dane) => {
-    const response = await apiClient.post('/auth/register', dane);
+  register: async (data) => {
+    const response = await apiClient.post('/auth/register', data);
     return response.data;
   },
 
-  /* Logowanie — zwraca token JWT */
-  login: async (dane) => {
-    const response = await apiClient.post('/auth/login', dane);
+  login: async (data) => {
+    const response = await apiClient.post('/auth/login', data);
     return response.data;
   },
 
-  /* Wylogowanie — informuje backend o zakończeniu sesji */
-  logout: async () => {
-    const response = await apiClient.post('/account/logout');
-    return response.data;
+  // Local logout only. Backend has no dedicated logout endpoint.
+  logout: () => {
+    clearAuthStorage();
   },
 
-  /* Fetch currently logged-in user data */
   fetchProfile: async () => {
-    const response = await apiClient.get('/account/profil');
+    const response = await apiClient.get('/auth/me');
     return response.data;
   },
 };

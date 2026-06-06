@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
 import useAnimalStore from '../../stores/useAnimalStore';
+import farmService from '../../services/farmService';
 import Header from '../../components/layout/Header';
 import { Button, Alert } from '../../components/common/Common';
 import styles from './AnimalForm.module.css';
@@ -47,8 +48,39 @@ function AnimalForm() {
   const navigate = useNavigate();
   const { selectedAnimal, isLoading, error, add, update, fetchById, clearSelected } =
     useAnimalStore();
+  const [farms, setFarms] = useState([]);
+  const [isFarmsLoading, setIsFarmsLoading] = useState(false);
+  const [farmsError, setFarmsError] = useState(null);
 
   const isEditMode = !!id;
+  const parseNumberWithComma = (value) => {
+    if (value === undefined || value === null || value === '') {
+      return Number.NaN;
+    }
+
+    const normalized = String(value).trim().replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : Number.NaN;
+  };
+
+  const parseOptionalNumberWithComma = (value) => {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const normalized = String(value).trim().replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : Number.NaN;
+  };
+
+  const parseFarmId = (value) => {
+    if (value === undefined || value === null || value === '') {
+      return Number.NaN;
+    }
+
+    const parsed = Number(value);
+    return Number.isInteger(parsed) ? parsed : Number.NaN;
+  };
 
   const {
     register,
@@ -60,6 +92,36 @@ function AnimalForm() {
   });
 
   /* In edit mode — fetch animal data and populate the form */
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadFarms = async () => {
+      setIsFarmsLoading(true);
+      setFarmsError(null);
+
+      try {
+        const farmList = await farmService.fetchAll();
+        if (isMounted) {
+          setFarms(farmList);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setFarmsError(loadError instanceof Error ? loadError.message : 'Nie udalo sie pobrac gospodarstw.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsFarmsLoading(false);
+        }
+      }
+    };
+
+    loadFarms();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (isEditMode) {
       fetchById(Number(id));
@@ -98,6 +160,7 @@ function AnimalForm() {
 
       <div className={styles.formPage}>
         {error && <Alert type="error">{error}</Alert>}
+        {farmsError && <Alert type="error">{farmsError}</Alert>}
 
         <div className={styles.formCard}>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -185,7 +248,7 @@ function AnimalForm() {
                   step="0.1"
                   className={`${styles.input} ${errors.weight ? styles.inputError : ''}`}
                   placeholder="0.0"
-                  {...register('weight', { valueAsNumber: true })}
+                  {...register('weight', { setValueAs: parseNumberWithComma })}
                 />
                 {errors.weight && (
                   <span className={styles.errorMessage}>{errors.weight.message}</span>
@@ -221,7 +284,7 @@ function AnimalForm() {
                   step="0.01"
                   className={`${styles.input} ${errors.purchasePrice ? styles.inputError : ''}`}
                   placeholder="0.00"
-                  {...register('purchasePrice', { valueAsNumber: true })}
+                  {...register('purchasePrice', { setValueAs: parseOptionalNumberWithComma })}
                 />
                 {errors.purchasePrice && (
                   <span className={styles.errorMessage}>{errors.purchasePrice.message}</span>
@@ -233,15 +296,28 @@ function AnimalForm() {
                 <label className={styles.label} htmlFor="farmId">
                   Gospodarstwo
                 </label>
-                <input
+                <select
                   id="farmId"
-                  type="number"
-                  className={`${styles.input} ${errors.farmId ? styles.inputError : ''}`}
-                  placeholder="ID gospodarstwa"
-                  {...register('farmId', { valueAsNumber: true })}
-                />
+                  className={`${styles.select} ${errors.farmId ? styles.inputError : ''}`}
+                  disabled={isFarmsLoading || farms.length === 0}
+                  {...register('farmId', { setValueAs: parseFarmId })}
+                >
+                  <option value="">
+                    {isFarmsLoading ? 'Ladowanie gospodarstw...' : '-- Wybierz gospodarstwo --'}
+                  </option>
+                  {farms.map((farm) => (
+                    <option key={farm.id} value={farm.id}>
+                      {farm.name} (ID: {farm.id})
+                    </option>
+                  ))}
+                </select>
                 {errors.farmId && (
                   <span className={styles.errorMessage}>{errors.farmId.message}</span>
+                )}
+                {!isFarmsLoading && farms.length === 0 && !farmsError && (
+                  <span className={styles.errorMessage}>
+                    Brak gospodarstw. Dodaj gospodarstwo w backendzie (np. przez Swagger), aby dodac zwierze.
+                  </span>
                 )}
               </div>
 

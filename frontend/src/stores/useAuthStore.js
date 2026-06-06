@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import authService from '../services/authService';
+import authService, { clearAuthStorage } from '../services/authService';
 
 /* Flag for demo mode — when the backend is unavailable, login
    works on local data without server communication.
@@ -208,9 +208,7 @@ const useAuthStore = create((set) => ({
 
   /* Logout */
   logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('demoUser');
+    clearAuthStorage();
     set({
       user: null,
       token: null,

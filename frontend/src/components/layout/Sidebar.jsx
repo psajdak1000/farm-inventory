@@ -11,6 +11,9 @@ import styles from './Sidebar.module.css';
 function Sidebar() {
   const { user, role, logout } = useAuthStore();
   const navigate = useNavigate();
+  const canAccessFarmSection =
+    role === 'Wlasciciel' || role === 'Administrator' || role === 'User';
+  const canAccessVetSection = role === 'Lekarz';
 
   const handleLogout = () => {
     logout();
@@ -46,7 +49,7 @@ function Sidebar() {
         </div>
 
         {/* Operational section — varies by role */}
-        {(role === 'Wlasciciel' || role === 'Administrator') && (
+        {canAccessFarmSection && (
           <div className={styles.navSection}>
             <div className={styles.navSectionTitle}>Gospodarstwo</div>
             <NavLink to="/animals" className={getLinkClass}>
@@ -64,7 +67,7 @@ function Sidebar() {
           </div>
         )}
 
-        {role === 'Lekarz' && (
+        {canAccessVetSection && (
           <div className={styles.navSection}>
             <div className={styles.navSectionTitle}>Weterynaria</div>
             <NavLink to="/animals" className={getLinkClass}>
