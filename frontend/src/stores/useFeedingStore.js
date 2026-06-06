@@ -1,50 +1,43 @@
 import { create } from 'zustand';
+import feedingService from '../services/feedingService';
 
-const DEMO_MODE = true;
+const getErrorMessage = (error, fallbackMessage) => {
+  const apiData = error?.response?.data;
 
-/* Test data for feedings */
-const DEMO_FEEDINGS = [
-  {
-    feedingId: 1,
-    name: 'Siano lucernowe',
-    type: 'Sucha',
-    quantity: '200 kg',
-    price: 450.00,
-    purchaseDate: '2026-01-15',
-    animalId: 1,
-  },
-  {
-    feedingId: 2,
-    name: 'Kiszonka z kukurydzy',
-    type: 'Mokra',
-    quantity: '500 kg',
-    price: 320.00,
-    purchaseDate: '2026-02-01',
-    animalId: 2,
-  },
-  {
-    feedingId: 3,
-    name: 'Pasza treściwa',
-    type: 'Koncentrat',
-    quantity: '100 kg',
-    price: 280.00,
-    purchaseDate: '2026-02-10',
-    animalId: 1,
-  },
-  {
-    feedingId: 4,
-    name: 'Sianokiszonka',
-    type: 'Mokra',
-    quantity: '300 kg',
-    price: 180.00,
-    purchaseDate: '2026-03-05',
-    animalId: 3,
-  },
-];
+  if (typeof apiData === 'string' && apiData.trim()) {
+    return apiData;
+  }
 
-let nextId = 5;
+  if (apiData && typeof apiData === 'object') {
+    const validationMessages = Object.values(apiData.errors ?? {})
+      .flatMap((entry) => (Array.isArray(entry) ? entry : []))
+      .filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
 
-const useFeedingStore = create((set, get) => ({
+    if (validationMessages.length > 0) {
+      return validationMessages.join(' ');
+    }
+  }
+
+  if (typeof apiData?.message === 'string' && apiData.message.trim()) {
+    return apiData.message;
+  }
+
+  if (typeof apiData?.error === 'string' && apiData.error.trim()) {
+    return apiData.error;
+  }
+
+  if (typeof apiData?.title === 'string' && apiData.title.trim()) {
+    return apiData.title;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+};
+
+const useFeedingStore = create((set) => ({
   feedings: [],
   selectedFeeding: null,
   isLoading: false,
@@ -52,45 +45,93 @@ const useFeedingStore = create((set, get) => ({
 
   fetchAll: async () => {
     set({ isLoading: true, error: null });
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const current = get().feedings;
-      if (current.length === 0) {
-        set({ feedings: [...DEMO_FEEDINGS], isLoading: false });
-      } else {
-        set({ isLoading: false });
-      }
-      return;
+
+    try {
+      const feedings = await feedingService.fetchAll();
+      set({ feedings });
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Nie udalo sie pobrac karmien.') });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchById: async (id) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const feeding = await feedingService.fetchById(id);
+      set({ selectedFeeding: feeding });
+    } catch (error) {
+      set({
+        selectedFeeding: null,
+        error: getErrorMessage(error, 'Nie udalo sie pobrac karmienia.'),
+      });
+    } finally {
+      set({ isLoading: false });
     }
   },
 
   add: async (data) => {
     set({ isLoading: true, error: null });
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const newFeeding = { ...data, feedingId: nextId++ };
+
+    try {
+      const createdFeeding = await feedingService.add(data);
       set((state) => ({
-        feedings: [...state.feedings, newFeeding],
-        isLoading: false,
+        feedings: [...state.feedings, createdFeeding],
       }));
       return true;
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Nie udalo sie dodac karmienia.') });
+      return false;
+    } finally {
+      set({ isLoading: false });
     }
-    return false;
+  },
+
+  update: async (id, data) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const updatedFeeding = await feedingService.update(id, data);
+      set((state) => ({
+        feedings: state.feedings.map((feeding) =>
+          feeding.feedingId === updatedFeeding.feedingId ? updatedFeeding : feeding
+        ),
+        selectedFeeding:
+          state.selectedFeeding?.feedingId === updatedFeeding.feedingId
+            ? updatedFeeding
+            : state.selectedFeeding,
+      }));
+      return true;
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Nie udalo sie zaktualizowac karmienia.') });
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   remove: async (id) => {
     set({ isLoading: true, error: null });
-    if (DEMO_MODE) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+
+    try {
+      await feedingService.remove(id);
       set((state) => ({
-        feedings: state.feedings.filter((k) => k.feedingId !== id),
-        isLoading: false,
+        feedings: state.feedings.filter((feeding) => feeding.feedingId !== id),
+        selectedFeeding:
+          state.selectedFeeding?.feedingId === id ? null : state.selectedFeeding,
       }));
       return true;
+    } catch (error) {
+      set({ error: getErrorMessage(error, 'Nie udalo sie usunac karmienia.') });
+      return false;
+    } finally {
+      set({ isLoading: false });
     }
-    return false;
   },
 
+  clearSelected: () => set({ selectedFeeding: null }),
   clearError: () => set({ error: null }),
 }));
 
