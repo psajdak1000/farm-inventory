@@ -1,27 +1,45 @@
 using InwentarzWGospodarstwie.Models;
+using InwentarzWGospodarstwie.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace InwentarzWGospodarstwie.Controllers;
 
-[ApiController] // na podstawie apicontroller swagger identyfikuje kontroler jako endpoint API i generuje odpowiedni¹ dokumentacjê
-[Route("api/animals")] //sciezka bazowa dla tego kontrolera
+[ApiController]
+[Route("api/animals")]
+[Authorize]
 public class AnimalsController : ControllerBase
 {
     private readonly Database _context;
+    private readonly ICurrentUserScopeService _currentUserScopeService;
 
-    public AnimalsController(Database context)
+    public AnimalsController(Database context, ICurrentUserScopeService currentUserScopeService)
     {
         _context = context;
+        _currentUserScopeService = currentUserScopeService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AnimalResponse>>> GetAll()
     {
-        var animals = await _context.Animals
-            .AsNoTracking()
-            .Select(a => ToResponse(a))
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
+        IQueryable<Animal> query = _context.Animals.AsNoTracking();
+
+        if (!scope.IsAdmin)
+        {
+            if (scope.FarmIds.Count == 0)
+            {
+                return Ok(Array.Empty<AnimalResponse>());
+            }
+
+            query = query.Where(animal => scope.FarmIds.Contains(animal.FarmId));
+        }
+
+        var animals = await query
+            .Select(animal => ToResponse(animal))
             .ToListAsync();
 
         return Ok(animals);
@@ -30,11 +48,18 @@ public class AnimalsController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<AnimalResponse>> GetById(int id)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var animal = await _context.Animals
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (animal is null)
+        {
+            return NotFound("Animal with the specified ID was not found.");
+        }
+
+        if (!scope.CanAccessFarm(animal.FarmId))
         {
             return NotFound("Animal with the specified ID was not found.");
         }
@@ -45,10 +70,20 @@ public class AnimalsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<AnimalResponse>> Create([FromBody] AnimalUpsertRequest request)
     {
-        var farmExists = await _context.Gospodarstwos.AnyAsync(g => g.IdGodpodarstwa == request.FarmId);
-        if (!farmExists)
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
+        var farm = await _context.Gospodarstwos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(g => g.IdGodpodarstwa == request.FarmId);
+
+        if (farm is null)
         {
             return BadRequest("Farm with the specified ID does not exist.");
+        }
+
+        if (!scope.CanAccessFarm(request.FarmId))
+        {
+            return StatusCode(403, "Nie masz dostepu do wskazanego gospodarstwa.");
         }
 
         var animal = new Animal
@@ -62,7 +97,7 @@ public class AnimalsController : ControllerBase
             PurchasePrice = request.PurchasePrice,
             DepartureDate = request.DepartureDate,
             SalePrice = request.SalePrice,
-            FarmId = request.FarmId
+            FarmId = request.FarmId,
         };
 
         _context.Animals.Add(animal);
@@ -74,16 +109,31 @@ public class AnimalsController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<AnimalResponse>> Update(int id, [FromBody] AnimalUpsertRequest request)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var animal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == id);
         if (animal is null)
         {
             return NotFound("Animal with the specified ID was not found.");
         }
 
-        var farmExists = await _context.Gospodarstwos.AnyAsync(g => g.IdGodpodarstwa == request.FarmId);
-        if (!farmExists)
+        if (!scope.CanAccessFarm(animal.FarmId))
+        {
+            return NotFound("Animal with the specified ID was not found.");
+        }
+
+        var farm = await _context.Gospodarstwos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(g => g.IdGodpodarstwa == request.FarmId);
+
+        if (farm is null)
         {
             return BadRequest("Farm with the specified ID does not exist.");
+        }
+
+        if (!scope.CanAccessFarm(request.FarmId))
+        {
+            return StatusCode(403, "Nie masz dostepu do wskazanego gospodarstwa.");
         }
 
         animal.EarTagId = request.EarTagId;
@@ -101,13 +151,18 @@ public class AnimalsController : ControllerBase
         return Ok(ToResponse(animal));
     }
 
-    
-
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var animal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == id);
         if (animal is null)
+        {
+            return NotFound("Animal with the specified ID was not found.");
+        }
+
+        if (!scope.CanAccessFarm(animal.FarmId))
         {
             return NotFound("Animal with the specified ID was not found.");
         }

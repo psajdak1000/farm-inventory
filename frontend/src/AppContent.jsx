@@ -16,8 +16,10 @@ import AnimalDetails from './pages/animals/AnimalDetails';
 import AnimalForm from './pages/animals/AnimalForm';
 import FeedingList from './pages/feeding/FeedingList';
 import FeedingForm from './pages/feeding/FeedingForm';
+import FeedingDetails from './pages/feeding/FeedingDetails';
 import ProcedureList from './pages/procedures/ProcedureList';
 import ProcedureForm from './pages/procedures/ProcedureForm';
+import ProcedureDetails from './pages/procedures/ProcedureDetails';
 import ProfilePage from './pages/profile/ProfilePage';
 import AdminPanel from './pages/admin/AdminPanel';
 import FarmSetupPage from './pages/farms/FarmSetupPage';
@@ -55,10 +57,12 @@ function AppContent() {
         <Route path="animals/:id/edit" element={<AnimalForm />} />
 
         <Route path="feeding" element={<FeedingList />} />
+        <Route path="feeding/:id" element={<FeedingDetails />} />
         <Route path="feeding/add" element={<FeedingForm />} />
         <Route path="feeding/:id/edit" element={<FeedingForm />} />
 
         <Route path="procedures" element={<ProcedureList />} />
+        <Route path="procedures/:id" element={<ProcedureDetails />} />
         <Route path="procedures/add" element={<ProcedureForm />} />
         <Route path="procedures/:id/edit" element={<ProcedureForm />} />
 

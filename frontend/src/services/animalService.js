@@ -124,7 +124,11 @@ const mapKnownBackendMessage = (message) => {
   }
 
   if (normalized === 'Farm with the specified ID does not exist.') {
-    return 'Gospodarstwo o podanym ID nie istnieje. Podaj istniejące ID gospodarstwa.';
+    return 'Gospodarstwo o podanym ID nie istnieje. Podaj istniejace ID gospodarstwa.';
+  }
+
+  if (normalized === 'Cannot delete animal because it is referenced by other records.') {
+    return 'Nie mozna usunac zwierzecia, poniewaz ma przypisane karmienia lub zabiegi. Najpierw usun powiazane rekordy albo pozostaw zwierze w ewidencji.';
   }
 
   return normalized;

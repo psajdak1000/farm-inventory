@@ -1,4 +1,6 @@
-﻿using InwentarzWGospodarstwie.Models;
+using InwentarzWGospodarstwie.Models;
+using InwentarzWGospodarstwie.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -7,21 +9,42 @@ namespace InwentarzWGospodarstwie.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ZabiegiController : ControllerBase
 {
     private readonly Database _context;
+    private readonly ICurrentUserScopeService _currentUserScopeService;
 
-    public ZabiegiController(Database context)
+    public ZabiegiController(Database context, ICurrentUserScopeService currentUserScopeService)
     {
         _context = context;
+        _currentUserScopeService = currentUserScopeService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ZabiegResponse>>> GetAll()
     {
-        var procedures = await _context.Zabiegs
-            .AsNoTracking()
-            .Select(z => ToResponse(z))
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
+        IQueryable<Zabieg> query = _context.Zabiegs.AsNoTracking();
+
+        if (!scope.IsAdmin)
+        {
+            if (scope.FarmIds.Count == 0)
+            {
+                return Ok(Array.Empty<ZabiegResponse>());
+            }
+
+            var allowedAnimalIdsQuery = _context.Animals
+                .AsNoTracking()
+                .Where(animal => scope.FarmIds.Contains(animal.FarmId))
+                .Select(animal => animal.Id);
+
+            query = query.Where(procedure => allowedAnimalIdsQuery.Contains(procedure.IdZwierzecia));
+        }
+
+        var procedures = await query
+            .Select(procedure => ToResponse(procedure))
             .ToListAsync();
 
         return Ok(procedures);
@@ -30,11 +53,19 @@ public class ZabiegiController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ZabiegResponse>> GetById(int id)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var procedure = await _context.Zabiegs
             .AsNoTracking()
             .FirstOrDefaultAsync(z => z.IdZabiegu == id);
 
         if (procedure is null)
+        {
+            return NotFound();
+        }
+
+        var hasAnimalAccess = await CanAccessAnimalAsync(scope, procedure.IdZwierzecia);
+        if (!hasAnimalAccess)
         {
             return NotFound();
         }
@@ -45,10 +76,20 @@ public class ZabiegiController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ZabiegResponse>> Create([FromBody] ZabiegUpsertRequest request)
     {
-        var animalExists = await _context.Animals.AnyAsync(a => a.Id == request.IdZwierzecia);
-        if (!animalExists)
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
+        var animal = await _context.Animals
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == request.IdZwierzecia);
+
+        if (animal is null)
         {
             return BadRequest("Nie istnieje zwierze o podanym IdZwierzecia.");
+        }
+
+        if (!scope.CanAccessFarm(animal.FarmId))
+        {
+            return StatusCode(403, "Nie masz dostepu do wskazanego zwierzecia.");
         }
 
         var doctorExists = await _context.Lekarzs.AnyAsync(l => l.IdLekarza == request.IdLekarza);
@@ -64,7 +105,7 @@ public class ZabiegiController : ControllerBase
             Opis = request.Opis,
             Koszt = request.Koszt,
             IdZwierzecia = request.IdZwierzecia,
-            IdLekarza = request.IdLekarza
+            IdLekarza = request.IdLekarza,
         };
 
         _context.Zabiegs.Add(procedure);
@@ -76,16 +117,32 @@ public class ZabiegiController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ZabiegResponse>> Update(int id, [FromBody] ZabiegUpsertRequest request)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var procedure = await _context.Zabiegs.FirstOrDefaultAsync(z => z.IdZabiegu == id);
         if (procedure is null)
         {
             return NotFound();
         }
 
-        var animalExists = await _context.Animals.AnyAsync(a => a.Id == request.IdZwierzecia);
-        if (!animalExists)
+        var canAccessCurrentAnimal = await CanAccessAnimalAsync(scope, procedure.IdZwierzecia);
+        if (!canAccessCurrentAnimal)
+        {
+            return NotFound();
+        }
+
+        var animal = await _context.Animals
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == request.IdZwierzecia);
+
+        if (animal is null)
         {
             return BadRequest("Nie istnieje zwierze o podanym IdZwierzecia.");
+        }
+
+        if (!scope.CanAccessFarm(animal.FarmId))
+        {
+            return StatusCode(403, "Nie masz dostepu do wskazanego zwierzecia.");
         }
 
         var doctorExists = await _context.Lekarzs.AnyAsync(l => l.IdLekarza == request.IdLekarza);
@@ -108,8 +165,16 @@ public class ZabiegiController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var procedure = await _context.Zabiegs.FirstOrDefaultAsync(z => z.IdZabiegu == id);
         if (procedure is null)
+        {
+            return NotFound();
+        }
+
+        var hasAnimalAccess = await CanAccessAnimalAsync(scope, procedure.IdZwierzecia);
+        if (!hasAnimalAccess)
         {
             return NotFound();
         }
@@ -117,6 +182,27 @@ public class ZabiegiController : ControllerBase
         _context.Zabiegs.Remove(procedure);
         await _context.SaveChangesAsync();
         return NoContent();
+    }
+
+    private async Task<bool> CanAccessAnimalAsync(CurrentUserScope scope, int animalId)
+    {
+        if (scope.IsAdmin)
+        {
+            return true;
+        }
+
+        if (scope.FarmIds.Count == 0)
+        {
+            return false;
+        }
+
+        var animalFarmId = await _context.Animals
+            .AsNoTracking()
+            .Where(animal => animal.Id == animalId)
+            .Select(animal => (int?)animal.FarmId)
+            .FirstOrDefaultAsync();
+
+        return animalFarmId.HasValue && scope.FarmIds.Contains(animalFarmId.Value);
     }
 
     private static ZabiegResponse ToResponse(Zabieg procedure) =>

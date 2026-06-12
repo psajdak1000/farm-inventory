@@ -15,12 +15,18 @@ public class AuthController : ControllerBase
     private readonly Database _context;
     private readonly IPasswordService _passwordService;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly ICurrentUserScopeService _currentUserScopeService;
 
-    public AuthController(Database context, IPasswordService passwordService, IJwtTokenService jwtTokenService)
+    public AuthController(
+        Database context,
+        IPasswordService passwordService,
+        IJwtTokenService jwtTokenService,
+        ICurrentUserScopeService currentUserScopeService)
     {
         _context = context;
         _passwordService = passwordService;
         _jwtTokenService = jwtTokenService;
+        _currentUserScopeService = currentUserScopeService;
     }
 
     [HttpPost("register")]
@@ -90,11 +96,12 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpGet("me")]
-    public ActionResult<AuthMeResponse> Me()
+    public async Task<ActionResult<AuthMeResponse>> Me()
     {
         var userId = User.FindFirst("userId")?.Value ?? string.Empty;
         var userName = User.FindFirst("userName")?.Value ?? User.Identity?.Name ?? string.Empty;
         var email = User.FindFirst("email")?.Value ?? User.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
+        var scope = await _currentUserScopeService.ResolveAsync(User);
 
         var roles = User.FindAll(ClaimTypes.Role).Select(role => role.Value).ToArray();
         if (roles.Length == 0)
@@ -102,7 +109,14 @@ public class AuthController : ControllerBase
             roles = User.FindAll("role").Select(role => role.Value).ToArray();
         }
 
-        return Ok(new AuthMeResponse("Authorized access.", userId, userName, email, roles));
+        return Ok(new AuthMeResponse(
+            "Authorized access.",
+            userId,
+            userName,
+            email,
+            roles,
+            scope.OwnerId,
+            scope.FarmIds));
     }
 }
 
@@ -135,4 +149,11 @@ public record LoginSuccessResponse(
     string AccessToken,
     int ExpiresInMinutes,
     LoginUserResponse User);
-public record AuthMeResponse(string Message, string UserId, string UserName, string Email, string[] Roles);
+public record AuthMeResponse(
+    string Message,
+    string UserId,
+    string UserName,
+    string Email,
+    string[] Roles,
+    int? WlascicielId,
+    IReadOnlyList<int> FarmIds);

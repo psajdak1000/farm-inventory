@@ -1,4 +1,6 @@
 using InwentarzWGospodarstwie.Models;
+using InwentarzWGospodarstwie.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -7,21 +9,37 @@ namespace InwentarzWGospodarstwie.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class GospodarstwaController : ControllerBase
 {
     private readonly Database _context;
+    private readonly ICurrentUserScopeService _currentUserScopeService;
 
-    public GospodarstwaController(Database context)
+    public GospodarstwaController(Database context, ICurrentUserScopeService currentUserScopeService)
     {
         _context = context;
+        _currentUserScopeService = currentUserScopeService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GospodarstwoResponse>>> GetAll()
     {
-        var farms = await _context.Gospodarstwos
-            .AsNoTracking()
-            .Select(g => ToResponse(g))
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
+        IQueryable<Gospodarstwo> query = _context.Gospodarstwos.AsNoTracking();
+
+        if (!scope.IsAdmin)
+        {
+            if (scope.OwnerId is null)
+            {
+                return Ok(Array.Empty<GospodarstwoResponse>());
+            }
+
+            query = query.Where(farm => farm.IdWlasciciela == scope.OwnerId.Value);
+        }
+
+        var farms = await query
+            .Select(farm => ToResponse(farm))
             .ToListAsync();
 
         return Ok(farms);
@@ -30,11 +48,18 @@ public class GospodarstwaController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<GospodarstwoResponse>> GetById(int id)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var farm = await _context.Gospodarstwos
             .AsNoTracking()
             .FirstOrDefaultAsync(g => g.IdGodpodarstwa == id);
 
         if (farm is null)
+        {
+            return NotFound();
+        }
+
+        if (!scope.CanAccessFarm(farm.IdGodpodarstwa))
         {
             return NotFound();
         }
@@ -45,10 +70,20 @@ public class GospodarstwaController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GospodarstwoResponse>> Create([FromBody] GospodarstwoUpsertRequest request)
     {
-        var ownerExists = await _context.Wlasciciels.AnyAsync(w => w.IdWlasciciela == request.IdWlasciciela);
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
+        var ownerExists = await _context.Wlasciciels.AnyAsync(owner => owner.IdWlasciciela == request.IdWlasciciela);
         if (!ownerExists)
         {
             return BadRequest("Nie istnieje wlasciciel o podanym IdWlasciciela.");
+        }
+
+        if (!scope.IsAdmin)
+        {
+            if (scope.OwnerId is null || request.IdWlasciciela != scope.OwnerId.Value)
+            {
+                return StatusCode(403, "Nie masz dostepu do wskazanego wlasciciela.");
+            }
         }
 
         var farm = new Gospodarstwo
@@ -57,7 +92,7 @@ public class GospodarstwaController : ControllerBase
             Adres = request.Adres,
             Typ = request.Typ,
             Powierzchnia = request.Powierzchnia,
-            IdWlasciciela = request.IdWlasciciela
+            IdWlasciciela = request.IdWlasciciela,
         };
 
         _context.Gospodarstwos.Add(farm);
@@ -69,16 +104,31 @@ public class GospodarstwaController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<GospodarstwoResponse>> Update(int id, [FromBody] GospodarstwoUpsertRequest request)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var farm = await _context.Gospodarstwos.FirstOrDefaultAsync(g => g.IdGodpodarstwa == id);
         if (farm is null)
         {
             return NotFound();
         }
 
-        var ownerExists = await _context.Wlasciciels.AnyAsync(w => w.IdWlasciciela == request.IdWlasciciela);
+        if (!scope.CanAccessFarm(farm.IdGodpodarstwa))
+        {
+            return NotFound();
+        }
+
+        var ownerExists = await _context.Wlasciciels.AnyAsync(owner => owner.IdWlasciciela == request.IdWlasciciela);
         if (!ownerExists)
         {
             return BadRequest("Nie istnieje wlasciciel o podanym IdWlasciciela.");
+        }
+
+        if (!scope.IsAdmin)
+        {
+            if (scope.OwnerId is null || request.IdWlasciciela != scope.OwnerId.Value)
+            {
+                return StatusCode(403, "Nie masz dostepu do wskazanego wlasciciela.");
+            }
         }
 
         farm.Nazwa = request.Nazwa;
@@ -94,8 +144,15 @@ public class GospodarstwaController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
+        var scope = await _currentUserScopeService.ResolveAsync(User);
+
         var farm = await _context.Gospodarstwos.FirstOrDefaultAsync(g => g.IdGodpodarstwa == id);
         if (farm is null)
+        {
+            return NotFound();
+        }
+
+        if (!scope.CanAccessFarm(farm.IdGodpodarstwa))
         {
             return NotFound();
         }

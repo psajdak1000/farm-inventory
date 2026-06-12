@@ -1,26 +1,90 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAnimalStore from '../../stores/useAnimalStore';
+import useAuthStore from '../../stores/useAuthStore';
+import farmService from '../../services/farmService';
+import ownerService from '../../services/ownerService';
 import Header from '../../components/layout/Header';
 import { Button, Loader, Alert, EmptyState, ConfirmModal } from '../../components/common/Common';
+import { isAdminRole, resolveAccessibleFarms } from '../../utils/ownershipScope';
 import styles from './Animals.module.css';
-
-/* AnimalList — tabular view of all animals in the system.
-   Data is fetched from the API on first component render.
-   Handles three states: loading, error, success (with data or empty list).
-   Each table row contains action buttons: preview, edit, delete. */
 
 function AnimalList() {
   const { animals, isLoading, error, fetchAll, remove } = useAnimalStore();
+  const { user, role } = useAuthStore();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState(null);
+  const [allowedFarmIds, setAllowedFarmIds] = useState(new Set());
+  const [scopeError, setScopeError] = useState(null);
+  const [isScopeLoading, setIsScopeLoading] = useState(false);
 
-  /* Fetch data on component mount */
+  const adminRole = isAdminRole(role);
+
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
 
-  /* Handle delete — opens the confirmation modal */
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadScope = async () => {
+      if (adminRole) {
+        setAllowedFarmIds(new Set());
+        setScopeError(null);
+        return;
+      }
+
+      setIsScopeLoading(true);
+      setScopeError(null);
+
+      try {
+        const [farms, owners] = await Promise.all([farmService.fetchAll(), ownerService.fetchAll()]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const scoped = resolveAccessibleFarms({
+          farms,
+          owners,
+          role,
+          userEmail: user?.email,
+        });
+
+        setAllowedFarmIds(
+          new Set(
+            scoped.farms
+              .map((farm) => Number(farm?.id))
+              .filter((farmId) => Number.isInteger(farmId) && farmId > 0)
+          )
+        );
+        setScopeError(scoped.scopeError);
+      } catch (scopeLoadError) {
+        if (isMounted) {
+          setScopeError(
+            scopeLoadError instanceof Error
+              ? scopeLoadError.message
+              : 'Nie udalo sie pobrac zakresu gospodarstw.'
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsScopeLoading(false);
+        }
+      }
+    };
+
+    loadScope();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [adminRole, role, user?.email]);
+
+  const visibleAnimals = adminRole
+    ? animals
+    : animals.filter((animal) => allowedFarmIds.has(Number(animal?.farmId)));
+
   const handleDelete = async () => {
     if (deletingId) {
       await remove(deletingId);
@@ -30,32 +94,30 @@ function AnimalList() {
 
   return (
     <div className={styles.pageWrapper}>
-      <Header
-        title="Zwierzeta"
-        subtitle="Lista wszystkich zwierzat w gospodarstwie"
-      >
+      <Header title="Zwierzeta" subtitle="Lista wszystkich zwierzat w gospodarstwie">
         <Button variant="primary" onClick={() => navigate('/animals/add')}>
           Dodaj zwierze
         </Button>
       </Header>
 
       <main style={{ padding: 'var(--spacing-2xl)' }}>
-        {/* Loading state */}
         {isLoading && <Loader text="Pobieranie listy zwierzat..." />}
-
-        {/* Error state */}
         {error && <Alert type="error">{error}</Alert>}
+        {scopeError && <Alert type="error">{scopeError}</Alert>}
+        {scopeError && !adminRole && (
+          <Button variant="outline" onClick={() => navigate('/farm-setup')}>
+            Dodaj gospodarstwo
+          </Button>
+        )}
 
-        {/* Empty list state */}
-        {!isLoading && !error && animals.length === 0 && (
+        {!isLoading && !error && !isScopeLoading && visibleAnimals.length === 0 && (
           <EmptyState
             title="Brak zwierzat"
             description="Nie dodano jeszcze zadnego zwierzecia do systemu. Kliknij przycisk powyzej, aby dodac pierwsze zwierze."
           />
         )}
 
-        {/* Data table */}
-        {!isLoading && !error && animals.length > 0 && (
+        {!isLoading && !error && !isScopeLoading && visibleAnimals.length > 0 && (
           <div className={styles.tableCard}>
             <table className={styles.table}>
               <thead>
@@ -70,7 +132,7 @@ function AnimalList() {
                 </tr>
               </thead>
               <tbody>
-                {animals.map((animal) => (
+                {visibleAnimals.map((animal) => (
                   <tr key={animal.animalId}>
                     <td>{animal.eartagId}</td>
                     <td>{animal.breed}</td>
@@ -116,7 +178,6 @@ function AnimalList() {
         )}
       </main>
 
-      {/* Delete confirmation modal */}
       {deletingId && (
         <ConfirmModal
           title="Usuwanie zwierzecia"

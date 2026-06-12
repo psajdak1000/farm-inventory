@@ -17,6 +17,9 @@ import {
 } from '../../utils/ownershipScope';
 import formStyles from '../animals/AnimalForm.module.css';
 
+const NO_AVAILABLE_ANIMALS_MESSAGE =
+  'Brak zwierzat w Twoim gospodarstwie. Najpierw dodaj zwierze.';
+
 const isValidDateInput = (value) => {
   const normalized = String(value ?? '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
@@ -95,6 +98,7 @@ function ProcedureForm() {
     handleSubmit,
     reset,
     setValue,
+    getValues,
     setError,
     clearErrors,
     formState: { errors },
@@ -143,7 +147,11 @@ function ProcedureForm() {
           setScopeError(scoped.scopeError);
         }
 
-        const allowedFarmIds = new Set(scoped.farms.map((farm) => Number(farm?.id)));
+        const allowedFarmIds = new Set(
+          scoped.farms
+            .map((farm) => Number(farm?.id))
+            .filter((farmId) => Number.isInteger(farmId) && farmId > 0)
+        );
         const scopedAnimals = adminRole
           ? animalList
           : animalList.filter((animal) => allowedFarmIds.has(Number(animal?.farmId)));
@@ -186,15 +194,21 @@ function ProcedureForm() {
 
   useEffect(() => {
     if (availableAnimals.length === 1) {
-      setValue('animalId', Number(availableAnimals[0].animalId), { shouldValidate: true });
+      const onlyAnimalId = Number(availableAnimals[0].animalId);
+      const currentAnimalId = Number(getValues('animalId'));
+      const hasCurrentAvailableAnimal = availableAnimalIds.has(currentAnimalId);
+
+      if (!hasCurrentAvailableAnimal) {
+        setValue('animalId', onlyAnimalId, { shouldValidate: true });
+      }
+
       clearErrors('animalId');
     }
-  }, [availableAnimals, clearErrors, setValue]);
+  }, [availableAnimalIds, availableAnimals, clearErrors, getValues, setValue]);
 
   const onSubmit = async (data) => {
     if (availableAnimals.length === 0) {
-      const message =
-        scopeError || 'Brak zwierzat przypisanych do dostepnych gospodarstw. Dodaj zwierze, aby kontynuowac.';
+      const message = scopeError || NO_AVAILABLE_ANIMALS_MESSAGE;
       setError('animalId', { type: 'manual', message });
       return;
     }
@@ -258,9 +272,8 @@ function ProcedureForm() {
   };
 
   const isSingleAnimal = availableAnimals.length === 1;
-  const animalSelectDisabled = isRelationsLoading || availableAnimals.length === 0 || isSingleAnimal;
-  const noAnimalsMessage =
-    scopeError || 'Brak zwierzat przypisanych do dostepnych gospodarstw. Dodaj zwierze, aby kontynuowac.';
+  const animalSelectDisabled = isRelationsLoading || availableAnimals.length === 0;
+  const noAnimalsMessage = scopeError || NO_AVAILABLE_ANIMALS_MESSAGE;
   const showFarmSetupAction = Boolean(scopeError) && !isRelationsLoading;
 
   const handleAddFarm = () => {
@@ -355,7 +368,7 @@ function ProcedureForm() {
                     {isRelationsLoading
                       ? 'Ladowanie zwierzat...'
                       : isSingleAnimal
-                        ? 'Zwierze przypisane automatycznie'
+                        ? '-- Dostepne jedno zwierze --'
                         : '-- Wybierz zwierze --'}
                   </option>
                   {availableAnimals.map((animal) => (

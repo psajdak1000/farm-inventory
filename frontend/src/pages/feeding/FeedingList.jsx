@@ -1,22 +1,99 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useFeedingStore from '../../stores/useFeedingStore';
+import useAuthStore from '../../stores/useAuthStore';
+import animalService from '../../services/animalService';
+import farmService from '../../services/farmService';
+import ownerService from '../../services/ownerService';
 import Header from '../../components/layout/Header';
 import { Button, Loader, Alert, EmptyState, ConfirmModal } from '../../components/common/Common';
+import { isAdminRole, resolveAccessibleFarms } from '../../utils/ownershipScope';
 import tableStyles from '../animals/Animals.module.css';
-
-/* FeedingList — tabular view of all feedings in the system.
-   Analogous structure to AnimalList — fetches data from API,
-   handles loading/error/empty list states. */
 
 function FeedingList() {
   const { feedings, isLoading, error, fetchAll, remove } = useFeedingStore();
+  const { user, role } = useAuthStore();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState(null);
+  const [allowedAnimalIds, setAllowedAnimalIds] = useState(new Set());
+  const [scopeError, setScopeError] = useState(null);
+  const [isScopeLoading, setIsScopeLoading] = useState(false);
+
+  const adminRole = isAdminRole(role);
 
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadScope = async () => {
+      if (adminRole) {
+        setAllowedAnimalIds(new Set());
+        setScopeError(null);
+        return;
+      }
+
+      setIsScopeLoading(true);
+      setScopeError(null);
+
+      try {
+        const [farms, owners, animals] = await Promise.all([
+          farmService.fetchAll(),
+          ownerService.fetchAll(),
+          animalService.fetchAll(),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const scoped = resolveAccessibleFarms({
+          farms,
+          owners,
+          role,
+          userEmail: user?.email,
+        });
+
+        const allowedFarmIds = new Set(
+          scoped.farms
+            .map((farm) => Number(farm?.id))
+            .filter((farmId) => Number.isInteger(farmId) && farmId > 0)
+        );
+
+        const scopedAnimalIds = animals
+          .filter((animal) => allowedFarmIds.has(Number(animal?.farmId)))
+          .map((animal) => Number(animal?.animalId))
+          .filter((animalId) => Number.isInteger(animalId) && animalId > 0);
+
+        setAllowedAnimalIds(new Set(scopedAnimalIds));
+        setScopeError(scoped.scopeError);
+      } catch (scopeLoadError) {
+        if (isMounted) {
+          setScopeError(
+            scopeLoadError instanceof Error
+              ? scopeLoadError.message
+              : 'Nie udalo sie pobrac zakresu danych.'
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsScopeLoading(false);
+        }
+      }
+    };
+
+    loadScope();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [adminRole, role, user?.email]);
+
+  const visibleFeedings = adminRole
+    ? feedings
+    : feedings.filter((feeding) => allowedAnimalIds.has(Number(feeding?.animalId)));
 
   const handleDelete = async () => {
     if (deletingId) {
@@ -27,10 +104,7 @@ function FeedingList() {
 
   return (
     <div className={tableStyles.pageWrapper}>
-      <Header
-        title="Karmienia"
-        subtitle="Ewidencja karmien i kosztow pasz"
-      >
+      <Header title="Karmienia" subtitle="Ewidencja karmien i kosztow pasz">
         <Button variant="primary" onClick={() => navigate('/feeding/add')}>
           Dodaj karmienie
         </Button>
@@ -39,15 +113,21 @@ function FeedingList() {
       <main style={{ padding: 'var(--spacing-2xl)' }}>
         {isLoading && <Loader text="Pobieranie listy karmien..." />}
         {error && <Alert type="error">{error}</Alert>}
+        {scopeError && <Alert type="error">{scopeError}</Alert>}
+        {scopeError && !adminRole && (
+          <Button variant="outline" onClick={() => navigate('/farm-setup')}>
+            Dodaj gospodarstwo
+          </Button>
+        )}
 
-        {!isLoading && !error && feedings.length === 0 && (
+        {!isLoading && !error && !isScopeLoading && visibleFeedings.length === 0 && (
           <EmptyState
             title="Brak karmien"
             description="Nie zarejestrowano jeszcze zadnego karmienia. Kliknij przycisk powyzej, aby dodac pierwszy wpis."
           />
         )}
 
-        {!isLoading && !error && feedings.length > 0 && (
+        {!isLoading && !error && !isScopeLoading && visibleFeedings.length > 0 && (
           <div className={tableStyles.tableCard}>
             <table className={tableStyles.table}>
               <thead>
@@ -61,7 +141,7 @@ function FeedingList() {
                 </tr>
               </thead>
               <tbody>
-                {feedings.map((feeding) => (
+                {visibleFeedings.map((feeding) => (
                   <tr key={feeding.feedingId}>
                     <td>{feeding.name}</td>
                     <td>{feeding.type}</td>
@@ -70,6 +150,12 @@ function FeedingList() {
                     <td>{feeding.purchaseDate}</td>
                     <td>
                       <div className={tableStyles.actionsCell}>
+                        <button
+                          className={`${tableStyles.actionButton} ${tableStyles.viewButton}`}
+                          onClick={() => navigate(`/feeding/${feeding.feedingId}`)}
+                        >
+                          Podglad
+                        </button>
                         <button
                           className={`${tableStyles.actionButton} ${tableStyles.editButton}`}
                           onClick={() => navigate(`/feeding/${feeding.feedingId}/edit`)}
