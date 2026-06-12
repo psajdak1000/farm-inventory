@@ -1,12 +1,11 @@
 import apiClient from './apiClient';
 
-const mapApiFarmToUi = (farm) => ({
-  id: farm.idGospodarstwa ?? farm.idGodpodarstwa ?? farm.id ?? 0,
-  name: farm.nazwa ?? '',
-  address: farm.adres ?? '',
-  type: farm.typ ?? '',
-  area: farm.powierzchnia ?? 0,
-  ownerId: farm.idWlasciciela ?? farm.ownerId ?? 0,
+const mapApiOwnerToUi = (owner) => ({
+  id: owner.idWlasciciela ?? owner.ownerId ?? owner.id ?? 0,
+  firstName: owner.imie ?? owner.firstName ?? '',
+  lastName: owner.nazwisko ?? owner.lastName ?? '',
+  phone: owner.telefon ?? owner.phoneNumber ?? '',
+  email: owner.eMail ?? owner.email ?? '',
 });
 
 const getApiErrorMessage = (error, fallbackMessage) => {
@@ -37,15 +36,15 @@ const getApiErrorMessage = (error, fallbackMessage) => {
   return fallbackMessage;
 };
 
-const farmService = {
+const ownerService = {
   fetchAll: async () => {
     try {
-      const response = await apiClient.get('/gospodarstwa');
-      return Array.isArray(response.data) ? response.data.map(mapApiFarmToUi) : [];
+      const response = await apiClient.get('/wlasciciele');
+      return Array.isArray(response.data) ? response.data.map(mapApiOwnerToUi) : [];
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Failed to fetch farms.'));
+      throw new Error(getApiErrorMessage(error, 'Nie udalo sie pobrac listy wlascicieli.'));
     }
   },
 };
 
-export default farmService;
+export default ownerService;

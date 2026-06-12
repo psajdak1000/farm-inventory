@@ -71,6 +71,12 @@ function FeedingList() {
                     <td>
                       <div className={tableStyles.actionsCell}>
                         <button
+                          className={`${tableStyles.actionButton} ${tableStyles.editButton}`}
+                          onClick={() => navigate(`/feeding/${feeding.feedingId}/edit`)}
+                        >
+                          Edytuj
+                        </button>
+                        <button
                           className={`${tableStyles.actionButton} ${tableStyles.deleteButton}`}
                           onClick={() => setDeletingId(feeding.feedingId)}
                         >

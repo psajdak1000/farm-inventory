@@ -68,6 +68,12 @@ function ProcedureList() {
                     <td>
                       <div className={tableStyles.actionsCell}>
                         <button
+                          className={`${tableStyles.actionButton} ${tableStyles.editButton}`}
+                          onClick={() => navigate(`/procedures/${procedure.procedureId}/edit`)}
+                        >
+                          Edytuj
+                        </button>
+                        <button
                           className={`${tableStyles.actionButton} ${tableStyles.deleteButton}`}
                           onClick={() => setDeletingId(procedure.procedureId)}
                         >

@@ -55,9 +55,11 @@ function AppContent() {
 
         <Route path="feeding" element={<FeedingList />} />
         <Route path="feeding/add" element={<FeedingForm />} />
+        <Route path="feeding/:id/edit" element={<FeedingForm />} />
 
         <Route path="procedures" element={<ProcedureList />} />
         <Route path="procedures/add" element={<ProcedureForm />} />
+        <Route path="procedures/:id/edit" element={<ProcedureForm />} />
 
         <Route path="profile" element={<ProfilePage />} />
 
