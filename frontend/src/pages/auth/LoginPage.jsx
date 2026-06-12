@@ -105,19 +105,7 @@ function LoginPage() {
           Nie masz konta? <Link to="/register">Zarejestruj sie</Link>
         </div>
 
-        {/* Demo accounts — for testing without a backend */}
-        <div className={styles.demoSection}>
-          <div className={styles.demoTitle}>Konta testowe (tryb demo)</div>
-          <div className={styles.demoAccount}>
-            <strong>Wlasciciel:</strong> jan@kowalski.pl / Haslo123!
-          </div>
-          <div className={styles.demoAccount}>
-            <strong>Lekarz:</strong> anna@nowak.pl / Haslo123!
-          </div>
-          <div className={styles.demoAccount}>
-            <strong>Admin:</strong> admin@system.pl / Haslo123!
-          </div>
-        </div>
+        
       </div>
     </div>
   );

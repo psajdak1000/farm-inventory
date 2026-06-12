@@ -42,6 +42,7 @@ export const ROLES = {
   Wlasciciel: 'Wlasciciel gospodarstwa',
   Lekarz: 'Lekarz weterynarii',
   Administrator: 'Administrator systemu',
+  Admin: 'Administrator systemu',
 };
 
 export function getRoleLabel(role) {

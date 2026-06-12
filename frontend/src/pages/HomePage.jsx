@@ -12,6 +12,9 @@ import styles from './HomePage.module.css';
 
 function HomePage() {
   const { user, role } = useAuthStore();
+  const isAdmin = role === 'Administrator' || role === 'Admin';
+  const isOwner = role === 'Wlasciciel';
+  const isVeterinarian = role === 'Lekarz';
   const [aiMessage, setAiMessage] = useState('');
   const [aiAnswer, setAiAnswer] = useState('');
   const [aiError, setAiError] = useState(null);
@@ -50,12 +53,12 @@ function HomePage() {
       <main className={styles.dashboard}>
         <div className={styles.cardsGrid}>
           {/* Tile — Animals */}
-          {(role === 'Wlasciciel' || role === 'Administrator' || role === 'Lekarz') && (
+          {(isOwner || isAdmin || isVeterinarian) && (
             <Link to="/animals" className={styles.card}>
               <div className={styles.cardIcon}>&#9670;</div>
               <h3 className={styles.cardTitle}>Zwierzeta</h3>
               <p className={styles.cardDescription}>
-                {role === 'Lekarz'
+                {isVeterinarian
                   ? 'Przegladaj baze zwierzat w systemie'
                   : 'Zarzadzaj ewidencja zwierzat w gospodarstwie'}
               </p>
@@ -63,7 +66,7 @@ function HomePage() {
           )}
 
           {/* Tile — Feedings */}
-          {(role === 'Wlasciciel' || role === 'Administrator') && (
+          {(isOwner || isAdmin) && (
             <Link to="/feeding" className={styles.card}>
               <div className={styles.cardIcon}>&#9671;</div>
               <h3 className={styles.cardTitle}>Karmienia</h3>
@@ -74,7 +77,7 @@ function HomePage() {
           )}
 
           {/* Tile — Procedures */}
-          {(role === 'Wlasciciel' || role === 'Administrator' || role === 'Lekarz') && (
+          {(isOwner || isAdmin || isVeterinarian) && (
             <Link to="/procedures" className={styles.card}>
               <div className={styles.cardIcon}>&#9672;</div>
               <h3 className={styles.cardTitle}>Zabiegi</h3>
@@ -92,7 +95,7 @@ function HomePage() {
           </Link>
 
           {/* Tile — Admin */}
-          {role === 'Administrator' && (
+          {isAdmin && (
             <Link to="/admin/users" className={styles.card}>
               <div className={styles.cardIcon}>&#9673;</div>
               <h3 className={styles.cardTitle}>Administracja</h3>

@@ -14,7 +14,10 @@ builder.Services.AddDbContext<Database>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddHttpClient<IHuggingFaceService, HuggingFaceService>();
+builder.Services.AddHttpClient<IHuggingFaceService, HuggingFaceService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddCors(options =>
 {

@@ -67,8 +67,12 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid email or password.");
         }
 
-        var roles = new[] { "User" };
-        var tokenResult = _jwtTokenService.GenerateToken(user, roles[0]);
+        var role = string.Equals(user.Email, "adminadmin@system.pl", StringComparison.OrdinalIgnoreCase)
+            ? "Admin"
+            : "User";
+
+        var roles = new[] { role };
+        var tokenResult = _jwtTokenService.GenerateToken(user, role);
 
         var userResponse = new LoginUserResponse(
             user.Id,
