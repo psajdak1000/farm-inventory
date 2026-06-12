@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import useAnimalStore from '../../stores/useAnimalStore';
 import useAuthStore from '../../stores/useAuthStore';
 import farmService from '../../services/farmService';
@@ -47,6 +47,7 @@ const animalSchema = z.object({
 
 function AnimalForm() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, role } = useAuthStore();
   const { selectedAnimal, isLoading, error, add, update, fetchById, clearSelected } = useAnimalStore();
@@ -214,6 +215,12 @@ function AnimalForm() {
   const noFarmMessage = adminRole
     ? 'Brak gospodarstw. Najpierw dodaj gospodarstwo.'
     : NO_ASSIGNED_FARM_MESSAGE;
+  const hasNoAvailableFarms = !isFarmsLoading && availableFarms.length === 0 && !farmsError;
+
+  const handleAddFarm = () => {
+    const returnTo = `${location.pathname}${location.search}`;
+    navigate(`/farm-setup?returnTo=${encodeURIComponent(returnTo)}`);
+  };
 
   return (
     <div>
@@ -364,8 +371,13 @@ function AnimalForm() {
                   ))}
                 </select>
                 {errors.farmId && <span className={styles.errorMessage}>{errors.farmId.message}</span>}
-                {!isFarmsLoading && availableFarms.length === 0 && !farmsError && (
-                  <span className={styles.errorMessage}>{noFarmMessage}</span>
+                {hasNoAvailableFarms && <span className={styles.errorMessage}>{noFarmMessage}</span>}
+                {hasNoAvailableFarms && (
+                  <div className={styles.formActions}>
+                    <Button variant="outline" onClick={handleAddFarm}>
+                      Dodaj gospodarstwo
+                    </Button>
+                  </div>
                 )}
               </div>
 

@@ -20,6 +20,7 @@ import ProcedureList from './pages/procedures/ProcedureList';
 import ProcedureForm from './pages/procedures/ProcedureForm';
 import ProfilePage from './pages/profile/ProfilePage';
 import AdminPanel from './pages/admin/AdminPanel';
+import FarmSetupPage from './pages/farms/FarmSetupPage';
 
 /* 404 page */
 import NotFoundPage from './pages/NotFoundPage';
@@ -62,6 +63,7 @@ function AppContent() {
         <Route path="procedures/:id/edit" element={<ProcedureForm />} />
 
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="farm-setup" element={<FarmSetupPage />} />
 
         {/* Admin module — only for administrators */}
         <Route path="admin/users" element={<AdminPanel />} />

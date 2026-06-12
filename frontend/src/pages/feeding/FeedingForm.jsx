@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import useFeedingStore from '../../stores/useFeedingStore';
 import useAuthStore from '../../stores/useAuthStore';
 import animalService from '../../services/animalService';
@@ -41,6 +41,7 @@ const feedingSchema = z.object({
 function FeedingForm() {
   const { id } = useParams();
   const isEditMode = !!id;
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, role } = useAuthStore();
   const {
@@ -207,6 +208,12 @@ function FeedingForm() {
   const animalSelectDisabled = isAnimalsLoading || availableAnimals.length === 0 || isSingleAnimal;
   const noAnimalsMessage =
     scopeError || 'Brak zwierzat przypisanych do dostepnych gospodarstw. Dodaj zwierze, aby kontynuowac.';
+  const showFarmSetupAction = Boolean(scopeError) && !isAnimalsLoading;
+
+  const handleAddFarm = () => {
+    const returnTo = `${location.pathname}${location.search}`;
+    navigate(`/farm-setup?returnTo=${encodeURIComponent(returnTo)}`);
+  };
 
   return (
     <div>
@@ -328,6 +335,13 @@ function FeedingForm() {
                 {errors.animalId && <span className={formStyles.errorMessage}>{errors.animalId.message}</span>}
                 {!isAnimalsLoading && availableAnimals.length === 0 && !animalsError && (
                   <span className={formStyles.errorMessage}>{noAnimalsMessage}</span>
+                )}
+                {showFarmSetupAction && (
+                  <div className={formStyles.formActions}>
+                    <Button variant="outline" onClick={handleAddFarm}>
+                      Dodaj gospodarstwo
+                    </Button>
+                  </div>
                 )}
               </div>
 
